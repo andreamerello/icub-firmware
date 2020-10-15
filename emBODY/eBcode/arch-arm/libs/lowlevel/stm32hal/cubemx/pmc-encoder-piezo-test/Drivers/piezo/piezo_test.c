@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <unistd.h>
+#include <stdio.h>
 #include "piezo.h"
 
 pthread_t dma_thread;
@@ -37,6 +38,7 @@ void *dma_worker(void *arg)
 		if (dma_data.idx == dma_data.size)
 			dma_data.idx = 0;
 		usleep(1000);
+		fprintf(stderr, "%d ", out);
 	}
 }
 
@@ -66,16 +68,19 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 	pthread_join(dma_thread, NULL);
 }
 
-int dummy_dma;
+dmaspi_handle_t dmaspi;
+SPI_HandleTypeDef dummy_spi = {.Init.Mode = SPI_MODE_MASTER};
+DMA_HandleTypeDef dummy_dma;
 int main()
 {
 	piezo_handle_t p;
 	piezo_cfg_t cfg;
 
+	dmaspi_init(&dmaspi, &dummy_dma, &dummy_spi);
 	cfg.max_v = 1000;
 	/* must be pow of 2 */
 	cfg.dma_elem_num = 512;
-	cfg.dmaspi = (void*)&dummy_dma;
+	cfg.dmaspi = &dmaspi;
 
 	piezo_init(&p, &cfg);
 	piezo_start(&p);
