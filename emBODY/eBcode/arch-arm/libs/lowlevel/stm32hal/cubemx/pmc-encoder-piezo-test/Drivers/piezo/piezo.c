@@ -3,31 +3,10 @@
 #include <errno.h>
 #include "piezo.h"
 
-static const uint32_t PIEZO_PHASETABLE[128] = {
-	0 ,	49 ,	98 ,	147 ,	196 ,	244 ,	292 ,	339 ,
-	385 ,	430 ,	474 ,	517 ,	559 ,	599 ,	638 ,	675 ,
-	711 ,	745 ,	777 ,	807 ,	835 ,	861 ,	885 ,	907 ,
-	927 ,	944 ,	959 ,	972 ,	982 ,	990 ,	996 ,	999 ,
-	999 ,	998 ,	993 ,	987 ,	978 ,	966 ,	952 ,	936 ,
-	918 ,	897 ,	874 ,	849 ,	822 ,	793 ,	762 ,	729 ,
-	694 ,	658 ,	620 ,	580 ,	539 ,	497 ,	454 ,	409 ,
-	363 ,	317 ,	270 ,	222 ,	173 ,	124 ,	75 ,	26 ,
-	-23 ,	-72 ,	-121 ,	-170 ,	-219 ,	-267 ,	-314 ,	-360 ,
-	-406 ,	-451 ,	-494 ,	-537 ,	-578 ,	-617 ,	-655 ,	-692 ,
-	-727 ,	-760 ,	-791 ,	-820 ,	-847 ,	-873 ,	-896 ,	-916 ,
-	-935 ,	-951 ,	-965 ,	-977 ,	-986 ,	-993 ,	-997 ,	-999 ,
-	-999 ,	-996 ,	-991 ,	-983 ,	-973 ,	-960 ,	-945 ,	-928 ,
-	-908 ,	-887 ,	-863 ,	-837 ,	-809 ,	-779 ,	-747 ,	-713 ,
-	-677 ,	-640 ,	-602 ,	-561 ,	-520 ,	-477 ,	-433 ,	-388 ,
-	-342 ,	-295 ,	-247 ,	-199 ,	-150 ,	-101 ,	-52 ,	-3 ,
-};
-
 #define DAC_CMD_LOAD 0x0
 #define DAC_CMD_LOADLATCH 0x2
 
 /* stolen from Linux kernel -> GPL */
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
 #define __ACCESS_ONCE(x) ({		 \
 	typeof(x) __var = (typeof(x)) 0; \
 	(volatile typeof(x) *)&(x); })
@@ -73,10 +52,8 @@ static int fls(unsigned int x)
 int piezo_init(piezo_handle_t *p, piezo_cfg_t *cfg)
 {
 	memset(p, 0, sizeof(*p));
-	p->max_v = cfg->max_v;
-	p->dma_elem_num = cfg->dma_elem_num;
-	p->dmaspi = cfg->dmaspi;
-	p->dma_buffer = (piezo_dma_buf_t*)calloc(cfg->dma_elem_num,
+	p->cfg = *cfg;
+	p->dma_buffer = (piezo_dma_buf_t*)calloc(p->cfg.dma_elem_num,
 						 sizeof(piezo_dma_buf_t));
 	if (!p->dma_buffer)
 		return -ENOMEM;
@@ -84,19 +61,23 @@ int piezo_init(piezo_handle_t *p, piezo_cfg_t *cfg)
 	return 0;
 }
 
+void piezo_free(piezo_handle_t *p)
+{
+	free(p->dma_buffer);
+}
 
 static void piezo_dma_update(piezo_handle_t *p, int half)
 {
 	int i, j;
-	uint32_t val[4];
+	uint16_t val;
+	int idx[4];
 	piezo_dma_buf_t *buf;
 	uint32_t cmd;
 	int vel = ACCESS_ONCE(p->v);
-	int len = p->dma_elem_num / 2;
-	int _shift = fls(ARRAY_SIZE(PIEZO_PHASETABLE)) - 1;
+	int len = p->cfg.dma_elem_num;
+	int _shift = fls(p->cfg.phasetable_len) - 1;
 	int shift = 32 - _shift;
 	uint32_t mask = (1 << _shift) - 1;
-
 	/*
 	 * on half DMA IRQ    :  DMA works on 2nd part, FW on 1st part.
 	 * on complete DMA IRQ:  FW works on 1st part, DMA on 2nd part.
@@ -107,16 +88,17 @@ static void piezo_dma_update(piezo_handle_t *p, int half)
 	for (i = 0; i < len; i++) {
 		p->phase += vel;
 		/* GZ magic... */
-		val[0] = PIEZO_PHASETABLE[( p->phase >> shift) & mask];
-		val[1] = PIEZO_PHASETABLE[( ~p->phase >> shift) & mask];
-		val[2] = PIEZO_PHASETABLE[(( p->phase + 2147483648UL) >>
-					   shift) & mask];
-		val[3] = PIEZO_PHASETABLE[((~p->phase + 2147483648UL) >>
-					   shift) & mask];
+		idx[0] = (p->phase >> shift) & mask;
+		idx[1] = (~p->phase >> shift) & mask;
+		idx[2] = (( p->phase + 2147483648UL) >>
+			  shift) & mask;
+		idx[3] = ((~p->phase + 2147483648UL) >>
+			  shift) & mask;
 
 		for (j = 0; j < 4; j++) {
-			cmd = (j == 3) ? DAC_CMD_LOAD : DAC_CMD_LOADLATCH;
-			buf[i].DAC[j] = PIEZO_SETDACVALUE(cmd, j, val[j]);
+			val = p->cfg.phasetable[idx[j]];
+			cmd = (j == 3) ? DAC_CMD_LOADLATCH : DAC_CMD_LOAD;
+			ACCESS_ONCE(buf[i].DAC[j]) = PIEZO_SETDACVALUE(cmd, j, val);
 		}
 	}
 }
@@ -149,8 +131,10 @@ void piezo_start(piezo_handle_t *p)
 	piezo_dma_update(p, 0);
 	piezo_dma_update(p, 1);
 
-	dmaspi_start_cyclic(p->dmaspi,
-			    p->dma_buffer, sizeof(PIEZO_PHASETABLE),
+	/* xfer N 16-bit words, hence we divide len by 2 */
+	dmaspi_start_cyclic(p->cfg.dmaspi,
+			    p->dma_buffer, p->cfg.dma_elem_num *
+			    sizeof(piezo_dma_buf_t) / 2,
 			    piezo_dma_half_cb, piezo_dma_complete_cb, p);
 }
 
@@ -159,13 +143,14 @@ void piezo_stop(piezo_handle_t *p)
 	if (!p->running)
 		return;
 
-	dmaspi_stop_cyclic(p->dmaspi);
+	dmaspi_stop_cyclic(p->cfg.dmaspi);
 }
 
 int piezo_set_v(piezo_handle_t *p, int v)
 {
-	if (v > p->max_v)
+	if ((v > p->cfg.max_v) || (v < -p->cfg.max_v))
 		return -EINVAL;
+
 	ACCESS_ONCE(p->v) = v;
 
 	return 0;
