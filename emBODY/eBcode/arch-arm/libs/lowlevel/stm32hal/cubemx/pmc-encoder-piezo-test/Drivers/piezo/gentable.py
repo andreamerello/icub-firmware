@@ -6,6 +6,9 @@ import argparse
 parser = argparse.ArgumentParser(description = "command line opts")
 parser.add_argument('num', metavar = 'num', type=int,
                         help="The number of points to be generated")
+parser.add_argument('ampl', metavar = 'ampl', type=int,
+                        help="amplitude of the wave")
+
 args = parser.parse_args()
 
 if 2**int(math.log(args.num, 2)) != args.num:
@@ -14,8 +17,8 @@ if 2**int(math.log(args.num, 2)) != args.num:
 
 a = []
 for i in np.linspace(0,6.28,args.num):
-    s_val = math.sin(i);
-    val = int(s_val * 1000)
+    s_val = math.cos(i + 3.14);
+    val = args.ampl/2 + int(s_val * args.ampl/2)
     a.append(val)
 
 
