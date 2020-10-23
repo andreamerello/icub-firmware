@@ -51,8 +51,13 @@ static int fls(unsigned int x)
 
 int piezo_init(piezo_handle_t *p, piezo_cfg_t *cfg)
 {
+	int _shift;
+
 	memset(p, 0, sizeof(*p));
 	p->cfg = *cfg;
+	_shift = fls(p->cfg.phasetable_len) - 1;
+	p->shift = 32 - _shift;
+	p->mask = (1 << _shift) - 1;
 	p->dma_buffer = (piezo_dma_buf_t*)calloc(p->cfg.dma_elem_num,
 						 sizeof(piezo_dma_buf_t));
 	if (!p->dma_buffer)
@@ -75,9 +80,6 @@ static void piezo_dma_update(piezo_handle_t *p, int half)
 	uint32_t cmd;
 	int vel = ACCESS_ONCE(p->v);
 	int len = p->cfg.dma_elem_num;
-	int _shift = fls(p->cfg.phasetable_len) - 1;
-	int shift = 32 - _shift;
-	uint32_t mask = (1 << _shift) - 1;
 	/*
 	 * on half DMA IRQ    :  DMA works on 2nd part, FW on 1st part.
 	 * on complete DMA IRQ:  FW works on 1st part, DMA on 2nd part.
@@ -88,12 +90,12 @@ static void piezo_dma_update(piezo_handle_t *p, int half)
 	for (i = 0; i < len; i++) {
 		p->phase += vel;
 		/* GZ magic... */
-		idx[0] = (p->phase >> shift) & mask;
-		idx[1] = (~p->phase >> shift) & mask;
-		idx[2] = (( p->phase + 2147483648UL) >>
-			  shift) & mask;
-		idx[3] = ((~p->phase + 2147483648UL) >>
-			  shift) & mask;
+		idx[0] = (p->phase >> p->shift) & p->mask;
+		idx[1] = (~p->phase >> p->shift) & p->mask;
+		idx[2] = (( p->phase + 0x80000000UL) >>
+			  p->shift) & p->mask;
+		idx[3] = ((~p->phase + 0x80000000UL) >>
+			  p->shift) & p->mask;
 
 		for (j = 0; j < 4; j++) {
 			val = p->cfg.phasetable[idx[j]];

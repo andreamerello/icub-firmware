@@ -23,6 +23,8 @@ typedef struct {
 	piezo_dma_buf_t* dma_buffer;
 	int v;
 	uint32_t phase;
+	int shift;
+	uint32_t mask;
 	piezo_cfg_t cfg;
 } piezo_handle_t;
 
