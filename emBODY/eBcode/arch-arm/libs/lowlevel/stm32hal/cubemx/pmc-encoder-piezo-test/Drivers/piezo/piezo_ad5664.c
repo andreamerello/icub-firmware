@@ -1,7 +1,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <errno.h>
-#include "piezo.h"
+#include "piezo_ad5664.h"
 
 #define DAC_CMD_LOAD 0x0
 #define DAC_CMD_LOADLATCH 0x2
