@@ -105,15 +105,15 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 	pthread_join(dma_thread, NULL);
 }
 
-dmaspi_handle_t dmaspi;
+piezo_dmaspi_handle_t dmaspi;
 SPI_HandleTypeDef dummy_spi = {.Init.Mode = SPI_MODE_MASTER};
 DMA_HandleTypeDef dummy_dma;
 int main()
 {
-	piezo_handle_t p;
-	piezo_cfg_t cfg;
+	piezo_ad5664_handle_t p;
+	piezo_ad5664_cfg_t cfg;
 
-	dmaspi_init(&dmaspi, &dummy_dma, &dummy_spi);
+	piezo_dmaspi_init(&dmaspi, &dummy_dma, &dummy_spi);
 	cfg.piezo_freq = 1;
 	cfg.max_v = 0x7FFFFFFF;
 	/* must be pow of 2 */
@@ -135,9 +135,9 @@ int main()
 	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_GZ_CSV);
 
 
-	piezo_init(&p, &cfg);
-	piezo_set_v(&p, 10000000);
-	piezo_start(&p);
+	piezo_ad5664_init(&p, &cfg);
+	piezo_ad5664_set_v(&p, 10000000);
+	piezo_ad5664_start(&p);
 	sleep(5);
-	piezo_stop(&p);
+	piezo_ad5664_stop(&p);
 }

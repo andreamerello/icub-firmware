@@ -49,7 +49,7 @@ static int fls(unsigned int x)
 	 |((uint32_t)(val)>>8) & 0x000000FFUL	\
 	|((uint32_t)(val)<<24) & 0xFF000000UL)
 
-int piezo_init(piezo_handle_t *p, piezo_cfg_t *cfg)
+int piezo_ad5664_init(piezo_ad5664_handle_t *p, piezo_ad5664_cfg_t *cfg)
 {
 	int _shift;
 
@@ -58,25 +58,25 @@ int piezo_init(piezo_handle_t *p, piezo_cfg_t *cfg)
 	_shift = fls(p->cfg.phasetable_len) - 1;
 	p->shift = 32 - _shift;
 	p->mask = (1 << _shift) - 1;
-	p->dma_buffer = (piezo_dma_buf_t*)calloc(p->cfg.dma_elem_num,
-						 sizeof(piezo_dma_buf_t));
+	p->dma_buffer = (piezo_ad5664_dma_buf_t*)calloc(p->cfg.dma_elem_num,
+						 sizeof(piezo_ad5664_dma_buf_t));
 	if (!p->dma_buffer)
 		return -ENOMEM;
 
 	return 0;
 }
 
-void piezo_free(piezo_handle_t *p)
+void piezo_ad5664_free(piezo_ad5664_handle_t *p)
 {
 	free(p->dma_buffer);
 }
 
-static void piezo_dma_update(piezo_handle_t *p, int half)
+static inline void piezo_ad5664_dma_update(piezo_ad5664_handle_t *p, int half)
 {
 	int i, j;
 	uint16_t val;
 	int idx[4];
-	piezo_dma_buf_t *buf;
+	piezo_ad5664_dma_buf_t *buf;
 	uint32_t cmd;
 	int vel = ACCESS_ONCE(p->v);
 	int len = p->cfg.dma_elem_num;
@@ -105,50 +105,51 @@ static void piezo_dma_update(piezo_handle_t *p, int half)
 	}
 }
 
-static void piezo_dma_complete_cb(void *arg)
+static void piezo_ad5664_dma_complete_cb(void *arg)
 {
-	piezo_handle_t *p = arg;
-	piezo_dma_update(p, 0);
+	piezo_ad5664_handle_t *p = arg;
+	piezo_ad5664_dma_update(p, 0);
 }
 
-static void piezo_dma_half_cb(void *arg)
+static void piezo_ad5664_dma_half_cb(void *arg)
 {
-	piezo_handle_t *p = arg;
-	piezo_dma_update(p, 1);
+	piezo_ad5664_handle_t *p = arg;
+	piezo_ad5664_dma_update(p, 1);
 }
 
-static void piezo_release(piezo_handle_t *p)
+static void piezo_ad5664_release(piezo_ad5664_handle_t *p)
 {
-	piezo_stop(p);
+	piezo_ad5664_stop(p);
 	free(p->dma_buffer);
 }
 
-void piezo_start(piezo_handle_t *p)
+void piezo_ad5664_start(piezo_ad5664_handle_t *p)
 {
 	if (p->running)
 		return;
 
 	p->running = 1;
 
-	piezo_dma_update(p, 0);
-	piezo_dma_update(p, 1);
+	piezo_ad5664_dma_update(p, 0);
+	piezo_ad5664_dma_update(p, 1);
 
 	/* xfer N 16-bit words, hence we divide len by 2 */
-	dmaspi_start_cyclic(p->cfg.dmaspi,
-			    p->dma_buffer, p->cfg.dma_elem_num *
-			    sizeof(piezo_dma_buf_t) / 2,
-			    piezo_dma_half_cb, piezo_dma_complete_cb, p);
+	piezo_dmaspi_start_cyclic(p->cfg.dmaspi,
+				  p->dma_buffer, p->cfg.dma_elem_num *
+				  sizeof(piezo_ad5664_dma_buf_t) / 2,
+				  piezo_ad5664_dma_half_cb,
+				  piezo_ad5664_dma_complete_cb, p);
 }
 
-void piezo_stop(piezo_handle_t *p)
+void piezo_ad5664_stop(piezo_ad5664_handle_t *p)
 {
 	if (!p->running)
 		return;
 
-	dmaspi_stop_cyclic(p->cfg.dmaspi);
+	piezo_dmaspi_stop_cyclic(p->cfg.dmaspi);
 }
 
-int piezo_set_v(piezo_handle_t *p, int v)
+int piezo_ad5664_set_v(piezo_ad5664_handle_t *p, int v)
 {
 	if ((v > p->cfg.max_v) || (v < -p->cfg.max_v))
 		return -EINVAL;
@@ -159,7 +160,7 @@ int piezo_set_v(piezo_handle_t *p, int v)
 }
 
 #if 0
-uint32_t piezo_interpolate(uint32_t a, uint32_t b, int idx, int max)
+uint32_t piezo_ad5664_interpolate(uint32_t a, uint32_t b, int idx, int max)
 {
 	double ret;
 

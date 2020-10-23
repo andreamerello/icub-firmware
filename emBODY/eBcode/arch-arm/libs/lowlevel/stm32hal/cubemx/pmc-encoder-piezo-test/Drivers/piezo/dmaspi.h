@@ -9,13 +9,13 @@ typedef struct {
 	void (*hcb)(void *);
 	void (*cb)(void *);
 	void *cb_arg;
-} dmaspi_handle_t;
+} piezo_dmaspi_handle_t;
 
-int dmaspi_init(dmaspi_handle_t *h,
+int piezo_dmaspi_init(piezo_dmaspi_handle_t *h,
 		DMA_HandleTypeDef *dma, SPI_HandleTypeDef *spi);
-void dmaspi_start_cyclic(dmaspi_handle_t *h, void *data, int size,
+void piezo_dmaspi_start_cyclic(piezo_dmaspi_handle_t *h, void *data, int size,
 			 void (*hcb)(void *arg), void (*cb)(void *arg),
 			 void *arg);
-void dmaspi_stop_cyclic(dmaspi_handle_t *h);
+void piezo_dmaspi_stop_cyclic(piezo_dmaspi_handle_t *h);
 
 #endif
