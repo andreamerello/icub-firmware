@@ -153,7 +153,7 @@ int piezo_set_v(piezo_handle_t *p, int v)
 	if ((v > p->cfg.max_v) || (v < -p->cfg.max_v))
 		return -EINVAL;
 
-	ACCESS_ONCE(p->v) = v;
+	ACCESS_ONCE(p->v) = v * p->cfg.piezo_freq;
 
 	return 0;
 }

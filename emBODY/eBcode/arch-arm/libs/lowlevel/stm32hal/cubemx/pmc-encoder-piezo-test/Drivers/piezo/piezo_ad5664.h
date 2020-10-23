@@ -15,7 +15,7 @@ typedef struct {
 	dmaspi_handle_t *dmaspi;
 	const uint16_t *phasetable;
 	int phasetable_len;
-	/* dma */
+	int32_t piezo_freq;
 } piezo_cfg_t;
 
 typedef struct {

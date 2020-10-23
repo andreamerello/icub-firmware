@@ -114,6 +114,7 @@ int main()
 	piezo_cfg_t cfg;
 
 	dmaspi_init(&dmaspi, &dummy_dma, &dummy_spi);
+	cfg.piezo_freq = 1;
 	cfg.max_v = 0x7FFFFFFF;
 	/* must be pow of 2 */
 	cfg.dma_elem_num = 512;
