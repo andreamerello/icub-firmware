@@ -87,7 +87,10 @@ Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c \
 Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pcd.c \
 Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pcd_ex.c \
 Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_ll_usb.c \
-Src/system_stm32g4xx.c  
+Drivers/piezo/pmc_piezo.c \
+Drivers/piezo/piezo_dmaspi.c \
+Drivers/piezo/piezo_ad5664.c \
+Src/system_stm32g4xx.c
 
 # ASM sources
 ASM_SOURCES =  \
