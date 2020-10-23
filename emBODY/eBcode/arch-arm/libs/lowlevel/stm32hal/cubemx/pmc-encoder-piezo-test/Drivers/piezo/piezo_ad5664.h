@@ -6,7 +6,7 @@
 #include "dmaspi.h"
 
 typedef struct  __attribute__((packed)) {
-	uint32_t DAC[4];
+	uint32_t dac[4];
 } piezo_ad5664_dma_buf_t;
 
 typedef struct {

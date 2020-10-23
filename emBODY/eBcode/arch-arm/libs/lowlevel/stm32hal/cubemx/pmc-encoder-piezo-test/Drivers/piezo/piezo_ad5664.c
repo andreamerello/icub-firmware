@@ -65,7 +65,7 @@ static inline void piezo_ad5664_dma_update(piezo_ad5664_handle_t *p, int half)
 		for (j = 0; j < 4; j++) {
 			val = p->cfg.phasetable[idx[j]];
 			cmd = (j == 3) ? DAC_CMD_LOADLATCH : DAC_CMD_LOAD;
-			ACCESS_ONCE(buf[i].DAC[j]) = PIEZO_SETDACVALUE(cmd, j, val);
+			ACCESS_ONCE(buf[i].dac[j]) = PIEZO_SETDACVALUE(cmd, j, val);
 		}
 	}
 }
