@@ -83,16 +83,15 @@ void dmaspi_start_cyclic(dmaspi_handle_t *h, void *data, int size,
 	h->cb = cb;
 	h->hcb = hcb;
 	h->cb_arg = arg;
+
 	HAL_DMA_RegisterCallback(h->dma, HAL_DMA_XFER_CPLT_CB_ID, dmaspi_cb);
 	HAL_DMA_RegisterCallback(h->dma, HAL_DMA_XFER_HALFCPLT_CB_ID, dmaspi_hcb);
-	dmaspi_ssel_quirk();
-	if (h->spi->Init.Mode == SPI_MODE_MASTER)
-		HAL_SPI_Transmit_DMA(h->spi, data, size);
-	/*
-	HAL_DMA_Start_IT(p->dma_handle, p->dma_buffer,
-			 SPI_DR, sizeof(PIEZO_PHASETABLE));
-	*/
+	__HAL_DMA_ENABLE_IT(h->dma, DMA_IT_TC | DMA_IT_HT);
 
+	if (h->spi->Init.Mode == SPI_MODE_MASTER)
+		dmaspi_ssel_quirk();
+
+	HAL_SPI_Transmit_DMA(h->spi, data, size);
 }
 
 void dmaspi_stop_cyclic(dmaspi_handle_t *h)

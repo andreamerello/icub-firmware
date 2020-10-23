@@ -23,7 +23,9 @@ typedef struct {
 #define GPIO_PIN_SET 10
 #define HAL_DMA_XFER_CPLT_CB_ID 0xCDACB
 #define HAL_DMA_XFER_HALFCPLT_CB_ID 0xDACB
+
 #define HAL_Delay(x);
+#define __HAL_DMA_ENABLE_IT(x, y)
 void HAL_GPIO_WritePin(int port, int pin, int state);
 void HAL_DMA_RegisterCallback(DMA_HandleTypeDef *hdma,
 			      int CallbackID,
