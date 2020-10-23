@@ -122,14 +122,18 @@ int main()
 //	cfg.phasetable = TESTTABLE_SIN128;
 //	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_SIN128);
 
-	cfg.phasetable = TESTTABLE_SIN8_128;
-	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_SIN128);
+//	cfg.phasetable = TESTTABLE_SIN8_128;
+//	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_SIN128);
 
 //	cfg.phasetable = TESTTABLE_CONST8;
 //	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_CONST8);
 
 //	cfg.phasetable = TESTTABLE_RAMP8;
 //	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_RAMP8);
+
+	cfg.phasetable = TESTTABLE_GZ_CSV;
+	cfg.phasetable_len = ARRAY_SIZE(TESTTABLE_GZ_CSV);
+
 
 	piezo_init(&p, &cfg);
 	piezo_set_v(&p, 10000000);

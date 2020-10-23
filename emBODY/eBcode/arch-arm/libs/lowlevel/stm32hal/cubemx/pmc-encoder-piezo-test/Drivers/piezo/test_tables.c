@@ -1,5 +1,10 @@
 #include "test_tables.h"
 
+const uint16_t TESTTABLE_GZ_CSV[8193] =
+{
+	#include "PhaseTable.csv"
+};
+
 const uint16_t TESTTABLE_SIN128[128] = {
 	1 ,	2 ,	5 ,	11 ,	20 ,	31 ,	44 ,	59 ,
 	77 ,	97 ,	120 ,	144 ,	171 ,	199 ,	230 ,	262 ,
