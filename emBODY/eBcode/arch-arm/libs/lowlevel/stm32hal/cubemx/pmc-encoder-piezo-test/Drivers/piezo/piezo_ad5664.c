@@ -2,45 +2,10 @@
 #include <malloc.h>
 #include <errno.h>
 #include "piezo_ad5664.h"
+#include "gpl_utils.h"
 
 #define DAC_CMD_LOAD 0x0
 #define DAC_CMD_LOADLATCH 0x2
-
-/* stolen from Linux kernel -> GPL */
-#define __ACCESS_ONCE(x) ({		 \
-	typeof(x) __var = (typeof(x)) 0; \
-	(volatile typeof(x) *)&(x); })
-#define ACCESS_ONCE(x) (*__ACCESS_ONCE(x))
-
-static int fls(unsigned int x)
-{
-	int r = 32;
-
-	if (!x)
-		return 0;
-	if (!(x & 0xffff0000u)) {
-		x <<= 16;
-		r -= 16;
-	}
-	if (!(x & 0xff000000u)) {
-		x <<= 8;
-		r -= 8;
-	}
-	if (!(x & 0xf0000000u)) {
-		x <<= 4;
-		r -= 4;
-	}
-	if (!(x & 0xc0000000u)) {
-		x <<= 2;
-		r -= 2;
-	}
-	if (!(x & 0x80000000u)) {
-		x <<= 1;
-		r -= 1;
-	}
-	return r;
-}
-/* end of stolen from linux kernel */
 
 /* Macro: set a 32 bits word to be transmitted as two 16 bits half-word */
 #define PIEZO_SETDACVALUE(cmd,dac,val)		\

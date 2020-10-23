@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "../piezo_ad5664.h"
+#include "../gpl_utils.h"
 #include "test_tables.h"
 
 #define DAC_CMD_LOADLATCH 0x2
@@ -71,9 +72,9 @@ void *dma_worker(void *arg)
 			fprintf(f, "\n");
 		else
 			fprintf(f, ", ");
-		printf("0x%08x - %d %d %s\n", out,
-		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
-		       DAC_LDAC(out) ? "LDAC" : "");
+//		printf("0x%08x - %d %d %s\n", out,
+//		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
+//		       DAC_LDAC(out) ? "LDAC" : "");
 
 	}
 	fclose(f);
@@ -136,7 +137,7 @@ int main()
 
 
 	piezo_ad5664_init(&p, &cfg);
-	piezo_ad5664_set_v(&p, 10000000);
+	piezo_ad5664_set_v(&p, 20000000);
 	piezo_ad5664_start(&p);
 	sleep(5);
 	piezo_ad5664_stop(&p);
