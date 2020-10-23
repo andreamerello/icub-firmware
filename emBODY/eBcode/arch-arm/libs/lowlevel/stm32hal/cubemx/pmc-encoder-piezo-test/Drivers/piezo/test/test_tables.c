@@ -2,7 +2,7 @@
 
 const uint16_t TESTTABLE_GZ_CSV[8193] =
 {
-	#include "PhaseTable.csv"
+	#include "../PhaseTable.csv"
 };
 
 const uint16_t TESTTABLE_SIN128[128] = {

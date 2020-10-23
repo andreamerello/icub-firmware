@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "piezo_ad5664.h"
+#include "../piezo_ad5664.h"
 #include "test_tables.h"
 
 #define DAC_CMD_LOADLATCH 0x2
