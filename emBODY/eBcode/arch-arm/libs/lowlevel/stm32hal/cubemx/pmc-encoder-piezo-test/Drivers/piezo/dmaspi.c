@@ -32,7 +32,7 @@ static piezo_dmaspi_handle_t *dmaspi_from_dma(DMA_HandleTypeDef *dma)
 	piezo_dmaspi_table_t *tmp;
 
 	for (tmp = piezo_dmaspi_global_table; tmp; tmp = tmp->next)
-		if (tmp->data->dma == dma)
+		if (tmp->data->spi->hdmatx == dma)
 			return tmp->data;
 
 	return NULL;
@@ -54,14 +54,12 @@ void piezo_dmaspi_hcb(DMA_HandleTypeDef *hdma)
 	dmaspi->hcb(dmaspi->cb_arg);
 }
 
-int piezo_dmaspi_init(piezo_dmaspi_handle_t *h,
-		DMA_HandleTypeDef *dma, SPI_HandleTypeDef *spi)
+int piezo_dmaspi_init(piezo_dmaspi_handle_t *h, SPI_HandleTypeDef *spi)
 {
-	piezo_dmaspi_handle_t *tmp = dmaspi_from_dma(dma);
+	piezo_dmaspi_handle_t *tmp = dmaspi_from_dma(spi->hdmatx);
 	if (tmp)
 		return -EINVAL;
 
-	h->dma = dma;
 	h->spi = spi;
 
 	return dmaspi_register(h);
@@ -84,11 +82,11 @@ void piezo_dmaspi_start_cyclic(piezo_dmaspi_handle_t *h, void *data, int size,
 	h->hcb = hcb;
 	h->cb_arg = arg;
 
-	HAL_DMA_RegisterCallback(h->dma,
+	HAL_DMA_RegisterCallback(h->spi->hdmatx,
 				 HAL_DMA_XFER_CPLT_CB_ID, piezo_dmaspi_cb);
-	HAL_DMA_RegisterCallback(h->dma,
+	HAL_DMA_RegisterCallback(h->spi->hdmatx,
 				 HAL_DMA_XFER_HALFCPLT_CB_ID, piezo_dmaspi_hcb);
-	__HAL_DMA_ENABLE_IT(h->dma, DMA_IT_TC | DMA_IT_HT);
+	__HAL_DMA_ENABLE_IT(h->spi->hdmatx, DMA_IT_TC | DMA_IT_HT);
 
 	if (h->spi->Init.Mode == SPI_MODE_MASTER)
 		piezo_dmaspi_ssel_quirk();

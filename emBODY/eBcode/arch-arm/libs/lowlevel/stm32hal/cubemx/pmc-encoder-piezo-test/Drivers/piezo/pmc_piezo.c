@@ -30,7 +30,7 @@ int pmc_piezo_init()
 	cfg.dma_elem_num = 512;
 
 	for (i = 0; i < 3; i++) {
-		piezo_dmaspi_init(&dmaspi[i], spi[i].hdmatx, &spi[i]);
+		piezo_dmaspi_init(&dmaspi[i], &spi[i]);
 		cfg.dmaspi = &dmaspi[i];
 		piezo_ad5664_init(&pmc_piezo_h[i], &cfg);
 	}

@@ -107,14 +107,18 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 }
 
 piezo_dmaspi_handle_t dmaspi;
-SPI_HandleTypeDef dummy_spi = {.Init.Mode = SPI_MODE_MASTER};
 DMA_HandleTypeDef dummy_dma;
+SPI_HandleTypeDef dummy_spi = {
+	.Init.Mode = SPI_MODE_MASTER,
+	.hdmatx = &dummy_dma
+};
+
 int main()
 {
 	piezo_ad5664_handle_t p;
 	piezo_ad5664_cfg_t cfg;
 
-	piezo_dmaspi_init(&dmaspi, &dummy_dma, &dummy_spi);
+	piezo_dmaspi_init(&dmaspi, &dummy_spi);
 	cfg.piezo_freq = 1;
 	cfg.max_v = 0x7FFFFFFF;
 	/* must be pow of 2 */

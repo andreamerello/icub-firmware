@@ -15,6 +15,7 @@ typedef struct {
 typedef struct {
 	int dummy;
 	spi_init_t Init;
+	DMA_HandleTypeDef *hdmatx;
 } SPI_HandleTypeDef;
 
 #define DAC_SYNCEN_GPIO_Port 123
