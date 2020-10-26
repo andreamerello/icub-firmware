@@ -8,11 +8,11 @@
 #define DAC_CMD_LOADLATCH 0x2
 
 /* Macro: set a 32 bits word to be transmitted as two 16 bits half-word */
-#define PIEZO_SETDACVALUE(cmd,dac,val)		\
-	(((uint32_t)(cmd)<<11) & 0x00003800UL	\
-	 |((uint32_t)(dac)<<8) & 0x00000700UL	\
-	 |((uint32_t)(val)>>8) & 0x000000FFUL	\
-	|((uint32_t)(val)<<24) & 0xFF000000UL)
+#define PIEZO_SETDACVALUE(cmd,dac,val)			\
+	((((uint32_t)(cmd) << 11) & 0x00003800UL) |	\
+	 (((uint32_t)(dac) << 8) & 0x00000700UL) |	\
+	 (((uint32_t)(val) >> 8) & 0x000000FFUL) |	\
+	 (((uint32_t)(val) << 24) & 0xFF000000UL))
 
 int piezo_ad5664_init(piezo_ad5664_handle_t *p, piezo_ad5664_cfg_t *cfg)
 {
