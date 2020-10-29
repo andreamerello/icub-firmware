@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include "../piezo_gz.h"
 #include "../gpl_utils.h"
-#include "test_tables.h"
 
 int dbg_count = 0;
 
@@ -50,15 +49,15 @@ void *dma_worker(void *arg)
 		 * dma_data.size is in 16-bit words
 		 * the DMA buffer is accessed in 32-bit words
 		 */
-		if (dma_data.idx == dma_data.size) {
+		if (dma_data.idx == (dma_data.size / 4)) {
 			if (dma_h_cb)
 				dma_h_cb(dma_data.arg);
 			if (spi_h_cb)
 				spi_h_cb(dma_data.arg);
-			printf("xfer h\n");
+			//printf("xfer h\n");
 		}
 
-		if ((dma_data.idx / 2) == dma_data.size) {
+		if (dma_data.idx == (dma_data.size / 2)) {
 			dma_data.idx = 0;
 			if (dma_cb)
 				dma_cb(dma_data.arg);
@@ -66,7 +65,7 @@ void *dma_worker(void *arg)
 				spi_cb(dma_data.arg);
 				dbg_count++;
 			}
-			printf("xfer c\n");
+			//printf("xfer c\n");
 		}
 		usleep(50);
 
@@ -85,8 +84,8 @@ void *dma_worker(void *arg)
 			err = 1;
 		}
 
-		if (!err)
-			printf("OK\n");
+//		if (!err)
+//			printf("OK\n");
 
 		dac = (dac + 1) % 4;
 
@@ -95,9 +94,9 @@ void *dma_worker(void *arg)
 			fprintf(f, "\n");
 		else
 			fprintf(f, ", ");
-		printf("0x%08x - %d %d %s\n", out,
-		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
-		       DAC_LDAC(out) ? "LDAC" : "");
+//		printf("0x%08x - %d %d %s\n", out,
+//		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
+//		       DAC_LDAC(out) ? "LDAC" : "");
 
 	}
 	fclose(f);
@@ -159,5 +158,5 @@ int main()
 	piezoSetBrake(2, ENABLE);
 
 	HAL_SPI_DMAStop(&hspi1);
-	printf("count %d\n", dbg_count);
+//	printf("count %d\n", dbg_count);
 }
