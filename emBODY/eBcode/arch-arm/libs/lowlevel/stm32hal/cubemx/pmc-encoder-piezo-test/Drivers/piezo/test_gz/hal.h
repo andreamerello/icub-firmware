@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define USE_HAL_COMP_REGISTER_CALLBACKS 1
+#define USE_HAL_SPI_REGISTER_CALLBACKS 1
+
 #define UNUSED(x)
 #define LED_ON(x, y)
 #define LED_OFF(x, y)

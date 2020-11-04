@@ -14,6 +14,14 @@
 #include <string.h>
 #include "piezo_gz.h"
 
+#if (USE_HAL_COMP_REGISTER_CALLBACKS != 1)
+    #error Flag COMP in menu "Project Manager -> Advanced Settings -> Register CallBack" in CubeMx must be ENABLED
+#endif
+
+#if (USE_HAL_SPI_REGISTER_CALLBACKS != 1)
+    #error Flag SPI in menu "Project Manager -> Advanced Settings -> Register CallBack" in CubeMx must be ENABLED
+#endif
+
 /* Private macros *****************************************************************************************************/
 
 /* Values for functions piezoSetBrake() and piezoSetFreewheeling() */
@@ -49,11 +57,11 @@
 #define MICROSTEPS_NUMBER           (8192)
 
 /* Must be 32 - (n.bits of MICROSTEPS_NUMBER) */
-#define SHIFT_FACTOR                (19)
+#define SHIFT_FACTOR                (19U)
+#define SHIFT_MASK                  (0xFFFFFFFFU >> SHIFT_FACTOR)
 
 /* Half round-angle */
-#define HALF_ROUND                 (0x80000000UL)
-#define SHIFT_MASK    		   (0xFFFFFFFFU >> SHIFT_FACTOR)
+#define HALF_ROUND                  (0x80000000U)
 
 /* Number of quad-samples in DMA buffers */
 #define QUADSAMPLES_BUFFER_LENGHT   (256)
