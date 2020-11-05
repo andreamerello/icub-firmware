@@ -326,9 +326,6 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
      */
     piezoFreqConst = (2LL * 4LL * 36LL * 4294967296LL)/(int32_t)HAL_RCC_GetPCLK2Freq();
 
-    /* Clear DAC sync circuit */
-    HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
-
     /* precalc shift & mask factors and clear/initialize variables */
     for (i = 0; i < ARRAY_SIZE(pStatusTable); i++) {
         _shift = fls(pStatusTable[i]->cfg.phaseTableLen) - 1;
@@ -356,6 +353,9 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_COMPLETE_CB_ID,      piezoDMA_ISR_TC);
     __HAL_DMA_ENABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT);
 
+    /* Clear DAC sync circuit */
+    HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
+    HAL_Delay(5U);
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
 
