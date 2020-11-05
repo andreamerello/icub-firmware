@@ -8,7 +8,6 @@
 
 /* Includes ***********************************************************************************************************/
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
@@ -54,13 +53,6 @@
 //#define __PIEZO_ENTER_CRITICAL()    __HAL_DMA_DISABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT)
 //#define __PIEZO_EXIT_CRITICAL()     __HAL_DMA_ENABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT)
 
-/* Number of microsteps per step */
-#define MICROSTEPS_NUMBER           (8192)
-
-/* Must be 32 - (n.bits of MICROSTEPS_NUMBER) */
-#define SHIFT_FACTOR                (19U)
-#define SHIFT_MASK                  (0xFFFFFFFFU >> SHIFT_FACTOR)
-
 /* Half round-angle */
 #define HALF_ROUND                  (0x80000000U)
 
@@ -94,6 +86,9 @@ typedef struct
     volatile int32_t    phaseDelta;
     volatile uint32_t   phaseCntrl;
     QuadSample_t dmaBuffer[QUADSAMPLES_BUFFER_LENGHT];
+    int shift;
+    uint32_t mask;
+    piezoMotorCfg_t cfg;
 } PiezoMotorStatus_t ;
 
 
@@ -103,11 +98,11 @@ typedef struct
 static int32_t piezoFreqConst;
 
 /* Voltage descriptor for a single step of piezo motors */
-static const uint16_t phaseTable[MICROSTEPS_NUMBER + 1] =
-{
-    /* Include CSV file (edit and substitute "semicolon" with "comma") */
-    #include "PhaseTable.csv"
-};
+//static const uint16_t phaseTable[] =
+//{
+//    /* Include CSV file (edit and substitute "semicolon" with "comma") */
+//    #include "PhaseTable.csv"
+//};
 
 /* Piezo motors status descriptors */
 static PiezoMotorStatus_t piezoMotor1 ;
@@ -187,13 +182,13 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
             uint32_t valA, valB, valC, valD;
 
             /* Phase value for normal wave */
-            valA = phaseTable[(angle >> SHIFT_FACTOR) & SHIFT_MASK] ;
+            valA = pStatus->cfg.phaseTable[(angle >> pStatus->shift) & pStatus->mask] ;
             /* Phase value for time-reversed wave */
-            valB = phaseTable[(~angle >> SHIFT_FACTOR) & SHIFT_MASK] ;
+            valB = pStatus->cfg.phaseTable[(~angle >> pStatus->shift) & pStatus->mask] ;
             /* Phase value for 180° delayed wave */
-            valC = phaseTable[((angle + HALF_ROUND) >> SHIFT_FACTOR) & SHIFT_MASK] ;
+            valC = pStatus->cfg.phaseTable[((angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
             /* Phase value for time-reversed and 180° delayed wave */
-            valD = phaseTable[((~angle + HALF_ROUND) >> SHIFT_FACTOR) & SHIFT_MASK] ;
+            valD = pStatus->cfg.phaseTable[((~angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
 
             /* Load value for PHASE #1 DAC */
             pQSmp->dacA = SETDACVALUE(0x00, 0, valA);
@@ -320,8 +315,15 @@ static void piezoCOMP_ISR_Trigger3(COMP_HandleTypeDef *hcomp)
  * @param   void
  * @return  void
  */
-void piezoInit(void)
+void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3)
 {
+    int _shift;
+    int i;
+
+    pStatusTable[0]->cfg = *cfgM1;
+    pStatusTable[1]->cfg = *cfgM2;
+    pStatusTable[2]->cfg = *cfgM3;
+
     /* Constant to compute the step angle:
      * 2            PCLK2 prescaler
      * 4            number of DAC words per sample
@@ -334,23 +336,17 @@ void piezoInit(void)
     /* Clear DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
 
-    /* Clear all varibles for motor 1 */
-    piezoMotor1.phaseAngle = 0;
-    piezoMotor1.phaseDelta = 0;
-    piezoMotor1.phaseCntrl = PIEZO_NORMAL;
-    memset(piezoMotor1.dmaBuffer, 0, sizeof(piezoMotor1.dmaBuffer));
-
-    /* Clear all varibles for motor 2 */
-    piezoMotor2.phaseAngle = 0;
-    piezoMotor2.phaseDelta = 0;
-    piezoMotor2.phaseCntrl = PIEZO_NORMAL;
-    memset(piezoMotor2.dmaBuffer, 0, sizeof(piezoMotor2.dmaBuffer));
-
-    /* Clear all varibles for motor 3 */
-    piezoMotor3.phaseAngle = 0;
-    piezoMotor3.phaseDelta = 0;
-    piezoMotor3.phaseCntrl = PIEZO_NORMAL;
-    memset(piezoMotor3.dmaBuffer, 0, sizeof(piezoMotor3.dmaBuffer));
+    /* precalc shift & mask factors and clear/initialize variables */
+    for (i = 0; i < ARRAY_SIZE(pStatusTable); i++) {
+        _shift = fls(pStatusTable[i]->cfg.phaseTableLen) - 1;
+        pStatusTable[i]->shift = 32 - _shift;
+        pStatusTable[i]->mask = (1 << _shift) - 1;
+        pStatusTable[i]->phaseAngle = 0;
+        pStatusTable[i]->phaseDelta = 0;
+        pStatusTable[i]->phaseCntrl = PIEZO_NORMAL;
+        piezoLoadBuffer(pStatusTable[i], LOWER_HALF_INDEX);
+        piezoLoadBuffer(pStatusTable[i], UPPER_HALF_INDEX);
+    }
 
     /* Register the comparator callback functions */
     HAL_COMP_RegisterCallback(&hcomp1, HAL_COMP_TRIGGER_CB_ID, piezoCOMP_ISR_Trigger1);
@@ -370,12 +366,6 @@ void piezoInit(void)
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
 
-    piezoLoadBuffer(&piezoMotor1, LOWER_HALF_INDEX);
-    piezoLoadBuffer(&piezoMotor2, LOWER_HALF_INDEX);
-    piezoLoadBuffer(&piezoMotor3, LOWER_HALF_INDEX);
-    piezoLoadBuffer(&piezoMotor1, UPPER_HALF_INDEX);
-    piezoLoadBuffer(&piezoMotor2, UPPER_HALF_INDEX);
-    piezoLoadBuffer(&piezoMotor3, UPPER_HALF_INDEX);
 
     /* Start DMA for SPI 3 */
     SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */

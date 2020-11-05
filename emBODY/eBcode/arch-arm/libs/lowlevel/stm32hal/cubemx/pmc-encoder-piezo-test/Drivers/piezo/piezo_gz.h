@@ -14,8 +14,8 @@
   extern "C" {
 #endif
 
-
 /* Include files ******************************************************************************************************/
+#include <stdint.h>
 #include "hal.h"
 
 
@@ -29,12 +29,16 @@ typedef enum
     PIEZO_MOTOR3
 } piezoMotor_t ;
 
+typedef struct {
+    const uint16_t *phaseTable;
+    int phaseTableLen;
+} piezoMotorCfg_t;
 
 /* Exported macros ****************************************************************************************************/
 
 /* Exported functions *************************************************************************************************/
 
-extern void piezoInit(void);
+extern void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3);
 extern void piezoHighVoltage(FunctionalState enable);
 extern HAL_StatusTypeDef piezoSetStepFrequency(piezoMotor_t motor, int32_t freq);
 extern HAL_StatusTypeDef piezoGetStepFrequency(piezoMotor_t motor, int32_t *pFreq);
