@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "../piezo_gz.h"
 #include "../gpl_utils.h"
+#include "../tables/table.c"
 
 int dbg_count = 0;
 
@@ -149,9 +150,20 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 
 int main()
 {
-	piezoInit();
+	piezoMotorCfg_t cfg1, cfg2, cfg3;
+
+	cfg1.phaseTable = PIEZO_PHASETABLE;
+	cfg2.phaseTable = PIEZO_PHASETABLE;
+	cfg3.phaseTable = PIEZO_PHASETABLE;
+
+	cfg1.phaseTableLen = 8192;
+	cfg2.phaseTableLen = 8192;
+	cfg3.phaseTableLen = 8192;
+
+
+	piezoInit(&cfg1, &cfg2, &cfg3);
 	piezoHighVoltage(ENABLE);
-	piezoSetStepFrequency(0, 2000);
+	piezoSetStepFrequency(0, 200);
 	sleep(10);
 	piezoSetBrake(0, ENABLE);
 	piezoSetBrake(1, ENABLE);
