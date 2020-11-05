@@ -33,7 +33,7 @@ def write_csv(fname, values):
 
 def write_c_array(fname, values):
     with open(fname, 'w') as f:
-        f.write("static const uint32_t PIEZO_PHASETABLE[{:d}] = {{\n\t".format(len(values)))
+        f.write("static const uint16_t PIEZO_PHASETABLE[{:d}] = {{\n\t".format(len(values)))
         for i, v in enumerate(values):
             if i > 0 and i % 8 == 0:
                 f.write('\n\t')
