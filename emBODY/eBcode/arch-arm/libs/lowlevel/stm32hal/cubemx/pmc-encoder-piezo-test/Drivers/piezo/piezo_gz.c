@@ -72,10 +72,10 @@
 #define UPPER_HALF_INDEX            (QUADSAMPLES_BUFFER_LENGHT/2)
 
 /* Macro to set the value to be sent to a DAC */
-#define SETDACVALUE(cmd,dac,val) (((uint32_t)(cmd)<<11) & 0x00003800UL \
-                                 |((uint32_t)(dac)<<8)  & 0x00000700UL \
-                                 |((uint32_t)(val)>>8)  & 0x000000FFUL \
-                                 |((uint32_t)(val)<<24) & 0xFF000000UL)
+#define SETDACVALUE(cmd,dac,val) ((((uint32_t)(cmd)<<11) & 0x00003800UL) \
+				  |(((uint32_t)(dac)<<8)  & 0x00000700UL) \
+				  |(((uint32_t)(val)>>8)  & 0x000000FFUL) \
+				  |(((uint32_t)(val)<<24) & 0xFF000000UL))
 
 
 /* Private typedef ****************************************************************************************************/
