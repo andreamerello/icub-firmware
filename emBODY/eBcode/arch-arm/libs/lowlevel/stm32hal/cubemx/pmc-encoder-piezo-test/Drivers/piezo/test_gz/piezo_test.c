@@ -128,39 +128,41 @@ void HAL_SPI_RegisterCallback(SPI_HandleTypeDef *hspi,
 			      int CallbackID,
 			      void(*cb)(SPI_HandleTypeDef *_hspi))
 {
-	/* emulate just 1 ch for now */
-	if (hspi->id != hspi1.id)
-		return;
-
-	dma_data.arg = hspi;
+	dma_data[hspi->id].arg = hspi;
 	if (CallbackID == HAL_SPI_TX_COMPLETE_CB_ID)
-		spi_cb = cb;
+		spi_cb[hspi->id] = cb;
 	else
-		spi_h_cb = cb;
+		spi_h_cb[hspi->id] = cb;
 }
 
 void HAL_SPI_Transmit_DMA(SPI_HandleTypeDef *hspi,
 			  uint8_t *pData, uint16_t Size)
 {
-	/* emulate just 1 ch for now */
-	if (hspi->id != hspi1.id)
-		return;
+	ACCESS_ONCE(dma_data[hspi->id].size) = Size;
+	ACCESS_ONCE(dma_data[hspi->id].src) = pData;
 
-	dma_data.size = Size;
-	dma_data.src = pData;
-	dma_data.idx = 0;
-	pthread_create(&dma_thread, NULL, &dma_worker, NULL);
+	if (hspi->id == 0)
+		pthread_create(&dma_thread, NULL, &dma_worker, NULL);
 }
 
 void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 {
+
 	ACCESS_ONCE(dma_stop) = 1;
+
 	pthread_join(dma_thread, NULL);
+
 }
 
 int main()
 {
 	piezoMotorCfg_t cfg1, cfg2, cfg3;
+
+	//static const uint16_t phaseTable[] =
+	//{
+	    /* Include CSV file (edit and substitute "semicolon" with "comma") */
+	//    #include "PhaseTable.csv"
+	//};
 
 	cfg1.phaseTable = PIEZO_PHASETABLE;
 	cfg2.phaseTable = PIEZO_PHASETABLE;
@@ -175,10 +177,15 @@ int main()
 	piezoHighVoltage(ENABLE);
 	piezoSetStepFrequency(0, 200);
 	piezoSetStepFrequency(1, 100);
-	sleep(5);
-	piezoSetBrake(0, ENABLE);
-	piezoSetBrake(1, ENABLE);
-	piezoSetBrake(2, ENABLE);
+	piezoSetStepFrequency(2, 57);
+	sleep(2);
+	piezoSetMode(0, PIEZO_BRAKE);
+	sleep(2);
+	piezoSetMode(1, PIEZO_BRAKE);
+	sleep(1);
+	piezoSetMode(0, PIEZO_NORMAL);
+	piezoSetMode(2, PIEZO_BRAKE);
+	sleep(1);
 
 	HAL_SPI_DMAStop(&hspi1);
 //	printf("count %d\n", dbg_count);
