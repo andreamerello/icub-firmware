@@ -97,13 +97,6 @@ typedef struct
 /* Update frequency of a single QUAD-DAC */
 static int32_t piezoFreqConst;
 
-/* Voltage descriptor for a single step of piezo motors */
-//static const uint16_t phaseTable[] =
-//{
-//    /* Include CSV file (edit and substitute "semicolon" with "comma") */
-//    #include "PhaseTable.csv"
-//};
-
 /* Piezo motors status descriptors */
 static PiezoMotorStatus_t piezoMotor1 ;
 static PiezoMotorStatus_t piezoMotor2 ;
