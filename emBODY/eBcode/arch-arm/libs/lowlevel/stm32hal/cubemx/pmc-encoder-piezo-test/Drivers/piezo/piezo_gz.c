@@ -184,14 +184,13 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
             valD = pStatus->cfg.phaseTable[((~angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
 
             /* Load value for PHASE #1 DAC */
-            pQSmp->dacA = SETDACVALUE(0x00, 0, valA);
+            ACCESS_ONCE(pQSmp->dacA) = SETDACVALUE(0x00, 0, valA);
             /* Load value for PHASE #2 DAC */
-            pQSmp->dacB = SETDACVALUE(0x00, 1, valB);
+            ACCESS_ONCE(pQSmp->dacB) = SETDACVALUE(0x00, 1, valB);
             /* Load value for PHASE #3 DAC */
-            pQSmp->dacC = SETDACVALUE(0x00, 2, valC);
+            ACCESS_ONCE(pQSmp->dacC) = SETDACVALUE(0x00, 2, valC);
             /* Load value for PHASE #4 DAC */
-            pQSmp->dacD = SETDACVALUE(0x02, 3, valD);
-
+            ACCESS_ONCE(pQSmp->dacD) = SETDACVALUE(0x02, 3, valD);
 
             /* Increment step-angle */
             angle += delta ;
