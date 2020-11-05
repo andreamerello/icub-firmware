@@ -24,11 +24,6 @@
 
 /* Private macros *****************************************************************************************************/
 
-/* Values for functions piezoSetBrake() and piezoSetFreewheeling() */
-#define PIEZO_NORMAL        (0x00)
-#define PIEZO_BRAKE         (0x01)
-#define PIEZO_FREEWHEELING  (0x02)
-
 
 /* QUAD-DAC amplifiers gain */
 #define PIEZO_QDACGAIN      (19.0)
@@ -63,6 +58,10 @@
 #define LOWER_HALF_INDEX            (0)
 #define UPPER_HALF_INDEX            (QUADSAMPLES_BUFFER_LENGHT/2)
 
+/* number of samples to perform DAC transitions when changing state */
+#define PIEZO_RAMP_SAMPLES 10
+
+
 /* Macro to set the value to be sent to a DAC */
 #define SETDACVALUE(cmd,dac,val) ((((uint32_t)(cmd)<<11) & 0x00003800UL) \
 				  |(((uint32_t)(dac)<<8)  & 0x00000700UL) \
@@ -74,21 +73,29 @@
 
 typedef struct __attribute__((packed))
 {
-    uint32_t dacA;
-    uint32_t dacB;
-    uint32_t dacC;
-    uint32_t dacD;
+    uint32_t dac[4];
 } QuadSample_t;
 
 typedef struct
 {
-    volatile int32_t    phaseAngle;
-    volatile int32_t    phaseDelta;
-    volatile uint32_t   phaseCntrl;
+    volatile int32_t phaseAngle;
+    volatile int32_t phaseDelta;
+    volatile piezoMode_t phaseCntrl;
     QuadSample_t dmaBuffer[QUADSAMPLES_BUFFER_LENGHT];
     int shift;
     uint32_t mask;
     piezoMotorCfg_t cfg;
+    struct {
+        enum {
+            FSM_RAMP,
+            FSM_STEADY,
+            FSM_RUN
+        } state;
+        piezoMode_t mode;
+        uint32_t ramp_target[4];
+        uint32_t last_vals[4];
+        int ramp_counter;
+    } fsm;
 } PiezoMotorStatus_t ;
 
 
@@ -108,6 +115,30 @@ static PiezoMotorStatus_t * const pStatusTable[] = {&piezoMotor1, &piezoMotor2, 
 
 /* Local functions ****************************************************************************************************/
 
+
+static inline void piezoLoadQSmp(QuadSample_t *pQSmp, uint32_t vals[4])
+{
+    int i;
+    uint32_t cmd;
+
+    for (i = 0; i < 4; i++) {
+        cmd = (i == 3) ? 0x02 : 0x00;
+        ACCESS_ONCE(pQSmp->dac[i]) = SETDACVALUE(cmd, i, vals[i]);
+    }
+}
+
+static inline void piezoCalcWaves(PiezoMotorStatus_t *pStatus, uint32_t angle, uint32_t vals[4])
+{
+    /* Phase value for normal wave */
+    vals[0] = pStatus->cfg.phaseTable[(angle >> pStatus->shift) & pStatus->mask] ;
+    /* Phase value for time-reversed wave */
+    vals[1] = pStatus->cfg.phaseTable[(~angle >> pStatus->shift) & pStatus->mask] ;
+    /* Phase value for 180° delayed wave */
+    vals[2] = pStatus->cfg.phaseTable[((angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
+    /* Phase value for time-reversed and 180° delayed wave */
+    vals[3] = pStatus->cfg.phaseTable[((~angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
+}
+
 /*******************************************************************************************************************//**
  * @brief   Load half buffer of the specified Quad-DAC with consecutive samples taken from phaseTable[]. The function
  *          scans phaseTable with the speed phaseDelta given for the motor, and updates phaseAngle at the end.
@@ -121,9 +152,11 @@ static PiezoMotorStatus_t * const pStatusTable[] = {&piezoMotor1, &piezoMotor2, 
 
 static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 {
+    int i;
+    uint32_t cmd;
+    uint32_t val[4];
     /* Number of samples to process in the buffer */
     unsigned n = QUADSAMPLES_BUFFER_LENGHT/2;
-
     /* The phaseAngle, phaseDelta and phaseControl are volatile, keep local */
     uint32_t angle = (uint32_t)(pStatus->phaseAngle);
     uint32_t delta = (uint32_t)(pStatus->phaseDelta);
@@ -132,74 +165,68 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
     /* Set the pointer to the selected buffer */
     QuadSample_t *pQSmp = &(pStatus->dmaBuffer[index]);
 
+    /* on operation state change trigger a ramp */
+    if (cntrl != pStatus->fsm.mode) {
+        pStatus->fsm.mode = cntrl;
+        pStatus->fsm.state = FSM_RAMP;
+        pStatus->fsm.ramp_counter = 0;
 
-    /* Is the BRAKE active? */
-    if (cntrl & PIEZO_BRAKE)
-    {
-        /* Fill the half-buffer with the value for the minimum voltage */
-        for ( ; n-- ; pQSmp++)
-        {
-            /* Load value for PHASE #1 DAC */
-            pQSmp->dacA = SETDACVALUE(0x00, 0, PIEZO_MINVALUE);
-            /* Load value for PHASE #2 DAC */
-            pQSmp->dacB = SETDACVALUE(0x00, 1, PIEZO_MINVALUE);
-            /* Load value for PHASE #3 DAC */
-            pQSmp->dacC = SETDACVALUE(0x00, 2, PIEZO_MINVALUE);
-            /* Load value for PHASE #4 DAC */
-            pQSmp->dacD = SETDACVALUE(0x02, 3, PIEZO_MINVALUE);
+        switch (pStatus->fsm.mode) {
+        case PIEZO_BRAKE:
+            for (i = 0; i < 4; i++)
+                pStatus->fsm.ramp_target[i] = PIEZO_MINVALUE;
+            break;
+        case PIEZO_FREEWHEELING:
+            for (i = 0; i < 4; i++)
+                pStatus->fsm.ramp_target[i] = PIEZO_MAXVALUE;
+            break;
+        case PIEZO_NORMAL:
+            piezoCalcWaves(pStatus, angle, pStatus->fsm.ramp_target);
+            break; /* TODO */
         }
     }
-    /* Is the motor freewheeling? */
-    else if (cntrl & PIEZO_FREEWHEELING)
-    {
-        /* Fill the half-buffer with the value for the maximum voltage */
-        for ( ; n-- ; pQSmp++)
-        {
-            /* Load value for PHASE #1 DAC */
-            pQSmp->dacA = SETDACVALUE(0x00, 0, PIEZO_MAXVALUE);
-            /* Load value for PHASE #2 DAC */
-            pQSmp->dacB = SETDACVALUE(0x00, 1, PIEZO_MAXVALUE);
-            /* Load value for PHASE #3 DAC */
-            pQSmp->dacC = SETDACVALUE(0x00, 2, PIEZO_MAXVALUE);
-            /* Load value for PHASE #4 DAC */
-            pQSmp->dacD = SETDACVALUE(0x02, 3, PIEZO_MAXVALUE);
+
+    /* check if we are in FSM_RAMP state */
+    if (pStatus->fsm.state == FSM_RAMP) {
+        for (; pStatus->fsm.ramp_counter < PIEZO_RAMP_SAMPLES; pStatus->fsm.ramp_counter++) {
+            for (i = 0; i < 4; i++)
+                val[i] = (pStatus->fsm.ramp_target[i] +
+                          pStatus->fsm.last_vals[i]) *
+                    pStatus->fsm.ramp_counter / PIEZO_RAMP_SAMPLES;
+            if (n-- == 0)
+                return;
+            piezoLoadQSmp(pQSmp++, val);
         }
+
+        /* ramp finished */
+        for (i = 0; i < 4; i++)
+            pStatus->fsm.last_vals[i] = pStatus->fsm.ramp_target[i];
+        if (pStatus->fsm.mode == PIEZO_NORMAL)
+            pStatus->fsm.state = FSM_RUN;
+        else
+            pStatus->fsm.state = FSM_STEADY;
     }
-    /* Normal mode */
-    else
-    {
+
+    /* recheck FSM state; we could get a new state from previous FSM_RAMP check */
+    if (pStatus->fsm.state == FSM_STEADY) {
+        /* Fill the half-buffer with the value for steady voltage */
+        for ( ; n-- ; pQSmp++)
+            piezoLoadQSmp(pQSmp, pStatus->fsm.last_vals);
+    } else if (pStatus->fsm.state == FSM_RUN) {
         /* Fill the half-buffer with values taken from phaseTable[] */
         for ( ; n-- ; pQSmp++)
         {
-            /* Temporary variables */
-            uint32_t valA, valB, valC, valD;
-
-            /* Phase value for normal wave */
-            valA = pStatus->cfg.phaseTable[(angle >> pStatus->shift) & pStatus->mask] ;
-            /* Phase value for time-reversed wave */
-            valB = pStatus->cfg.phaseTable[(~angle >> pStatus->shift) & pStatus->mask] ;
-            /* Phase value for 180° delayed wave */
-            valC = pStatus->cfg.phaseTable[((angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
-            /* Phase value for time-reversed and 180° delayed wave */
-            valD = pStatus->cfg.phaseTable[((~angle + HALF_ROUND) >> pStatus->shift) & pStatus->mask] ;
-
-            /* Load value for PHASE #1 DAC */
-            ACCESS_ONCE(pQSmp->dacA) = SETDACVALUE(0x00, 0, valA);
-            /* Load value for PHASE #2 DAC */
-            ACCESS_ONCE(pQSmp->dacB) = SETDACVALUE(0x00, 1, valB);
-            /* Load value for PHASE #3 DAC */
-            ACCESS_ONCE(pQSmp->dacC) = SETDACVALUE(0x00, 2, valC);
-            /* Load value for PHASE #4 DAC */
-            ACCESS_ONCE(pQSmp->dacD) = SETDACVALUE(0x02, 3, valD);
+            piezoCalcWaves(pStatus, angle, val);
+            piezoLoadQSmp(pQSmp, val);
 
             /* Increment step-angle */
             angle += delta ;
         }
-        /* Updates phaseAngle only when phaseDelta is not null */
-        if (delta != 0) pStatus->phaseAngle = angle;
+        for (i = 0; i < 4; i++)
+            pStatus->fsm.last_vals[i] = val[i];
+        pStatus->phaseAngle = angle;
     }
 }
-
 
 /*******************************************************************************************************************//**
  * @brief   Interrupt callback function. This function is called by the DMA interrupt handler following the completion
@@ -256,7 +283,7 @@ static void piezoCOMP_ISR_Trigger1(COMP_HandleTypeDef *hcomp)
     /* Stop the comparator */
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
-    piezoSetBrake(PIEZO_MOTOR1, ENABLE);
+    piezoSetMode(PIEZO_MOTOR1, PIEZO_BRAKE);
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 1);
 }
@@ -273,7 +300,7 @@ static void piezoCOMP_ISR_Trigger2(COMP_HandleTypeDef *hcomp)
     /* Stop the comparator */
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
-    piezoSetBrake(PIEZO_MOTOR2, ENABLE);
+    piezoSetMode(PIEZO_MOTOR2, PIEZO_BRAKE);
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 2);
 }
@@ -290,7 +317,7 @@ static void piezoCOMP_ISR_Trigger3(COMP_HandleTypeDef *hcomp)
     /* Stop the comparator */
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
-    piezoSetBrake(PIEZO_MOTOR3, ENABLE);
+    piezoSetMode(PIEZO_MOTOR3, PIEZO_BRAKE);
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 4);
 }
@@ -333,6 +360,8 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
         pStatusTable[i]->phaseAngle = 0;
         pStatusTable[i]->phaseDelta = 0;
         pStatusTable[i]->phaseCntrl = PIEZO_NORMAL;
+        /* to trigger a ramp from zero V to table setpoint */
+        pStatusTable[i]->fsm.mode = PIEZO_BRAKE;
         piezoLoadBuffer(pStatusTable[i], LOWER_HALF_INDEX);
         piezoLoadBuffer(pStatusTable[i], UPPER_HALF_INDEX);
     }
@@ -446,8 +475,6 @@ HAL_StatusTypeDef piezoSetStepAngle(piezoMotor_t motor, uint32_t angle)
     HAL_StatusTypeDef result = HAL_ERROR;
     if ((motor < 3u) && (piezoFreqConst != 0))
     {
-        /* Null speed: the interrupt does not revert phaseAngle changes */
-        pStatusTable[motor]->phaseDelta = 0;
         /* Set the new step angle value */
         pStatusTable[motor]->phaseAngle = angle;
         /* No errors */
@@ -479,78 +506,24 @@ HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle)
     return result;
 }
 
-
 /*******************************************************************************************************************//**
- * @brief   Set or reset the BRAKE mode of the motor
+ * @brief   Select operation mode
  * @param   motor   Number of the motor
- *          enable  One of the following values:
- *                  ENABLE  Activate the BRAKE mode
- *                  DISABLE Deactivate the BRAKE mode
+ *          mode    One of the following values:
+ *                  PIEZO_NORMAL piezo motor is driven normally
+ *                  PIEZO_BRAKE piezo motor is held in brake state
+ *                  PIEZO_FREEWHEELING piezo motor is left free
  * @return  One of the following values:
  *          HAL_ERROR   arguments error
  *          HAL_OK      operation terminated without errors
  */
-HAL_StatusTypeDef piezoSetBrake(piezoMotor_t motor, FunctionalState enable)
+HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)
 {
-    /* Check arguments */
-    HAL_StatusTypeDef result = HAL_ERROR;
-    if ((motor < 3u) && (piezoFreqConst != 0))
-    {
-        /* Null speed: the interrupt does not revert the changes */
-        pStatusTable[motor]->phaseDelta = 0;
-        /* BRAKE active */
-        if (DISABLE != enable)
-        {
-            /* Set the BRAKE flag */
-            pStatusTable[motor]->phaseCntrl |= PIEZO_BRAKE;
-        }
-        /* BRAKE not active */
-        else
-        {
-            /* Reset the BRAKE flag */
-            pStatusTable[motor]->phaseCntrl &= ~PIEZO_BRAKE;
-        }
-        /* No errors */
-        result = HAL_OK;
-    }
-    return result;
-}
+    if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
+        return HAL_ERROR;
 
-
-/*******************************************************************************************************************//**
- * @brief   Set or reset the FREEWHEELING mode of the motor
- * @param   motor   Number of the motor
- *          enable  One of the following values:
- *                  ENABLE  Activate the FREEWHEELING mode
- *                  DISABLE Deactivate the FREEWHEELING mode
- * @return  One of the following values:
- *          HAL_ERROR   arguments error
- *          HAL_OK      operation terminated without errors
- */
-HAL_StatusTypeDef piezoSetFreewheeling(piezoMotor_t motor, FunctionalState enable)
-{
-    /* Check arguments */
-    HAL_StatusTypeDef result = HAL_ERROR;
-    if ((motor < 3u) && (piezoFreqConst != 0))
-    {
-        /* Null speed: the interrupt does not revert the changes */
-        pStatusTable[motor]->phaseDelta = 0;
-        /* FREEWHEELING active */
-        if (DISABLE != enable)
-        {
-            /* Set the FREEWHEELING flag */
-            pStatusTable[motor]->phaseCntrl |= PIEZO_FREEWHEELING;
-        }
-        /* FREEWHEELING not active */
-        else
-        {
-            /* Reset the FREEWHEELING flag */
-            pStatusTable[motor]->phaseCntrl &= ~PIEZO_FREEWHEELING;
-        }
-        /* No errors */
-        result = HAL_OK;
-    }
-    return result;
+    pStatusTable[motor]->phaseCntrl = mode;
+    return HAL_OK;
 }
 
 

@@ -29,6 +29,13 @@ typedef enum
     PIEZO_MOTOR3
 } piezoMotor_t ;
 
+typedef enum
+{
+    PIEZO_NORMAL,
+    PIEZO_BRAKE,
+    PIEZO_FREEWHEELING
+} piezoMode_t;
+
 typedef struct {
     const uint16_t *phaseTable;
     int phaseTableLen;
@@ -44,9 +51,7 @@ extern HAL_StatusTypeDef piezoSetStepFrequency(piezoMotor_t motor, int32_t freq)
 extern HAL_StatusTypeDef piezoGetStepFrequency(piezoMotor_t motor, int32_t *pFreq);
 extern HAL_StatusTypeDef piezoSetStepAngle(piezoMotor_t motor, uint32_t angle);
 extern HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle);
-extern HAL_StatusTypeDef piezoSetBrake(piezoMotor_t motor, FunctionalState enable);
-extern HAL_StatusTypeDef piezoSetFreewheeling(piezoMotor_t motor, FunctionalState enable);
-
+extern HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode);
 
 #ifdef __cplusplus
   } /* extern "C" */
