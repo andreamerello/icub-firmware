@@ -1,4 +1,4 @@
-#include "gpl_utils.h"
+#include "gpl_fls.h"
 
 /* all this stuff is stolen from, or based on code from, the Linux kernel */
 int fls(unsigned int x)

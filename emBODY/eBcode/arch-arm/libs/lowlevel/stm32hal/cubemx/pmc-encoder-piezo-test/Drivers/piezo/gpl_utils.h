@@ -5,6 +5,4 @@
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-int fls(unsigned int x);
-
 #endif
