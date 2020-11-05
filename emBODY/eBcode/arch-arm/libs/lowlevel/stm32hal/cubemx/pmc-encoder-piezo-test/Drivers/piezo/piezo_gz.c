@@ -225,14 +225,14 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 static void piezoDMA_ISR_HT(SPI_HandleTypeDef *hspi)
 {
     UNUSED(hspi);
-    LED_ON(LED_GREENPORT, LED_GREEN0);  // DEBUG ONLY
+    //LED_ON(LED_GREENPORT, LED_GREEN0);  // DEBUG ONLY
     /* Update the first half of the buffer for the QUAD_DAC of motor #1 */
     piezoLoadBuffer(&piezoMotor1, LOWER_HALF_INDEX);
     /* Update the first half of the buffer for the QUAD_DAC of motor #2 */
     piezoLoadBuffer(&piezoMotor2, LOWER_HALF_INDEX);
     /* Update the first half of the buffer for the QUAD_DAC of motor #3 */
     piezoLoadBuffer(&piezoMotor3, LOWER_HALF_INDEX);
-    LED_OFF(LED_GREENPORT, LED_GREEN1);  // DEBUG ONLY
+    //LED_OFF(LED_GREENPORT, LED_GREEN1);  // DEBUG ONLY
 }
 
 
@@ -247,14 +247,14 @@ static void piezoDMA_ISR_HT(SPI_HandleTypeDef *hspi)
 static void piezoDMA_ISR_TC(SPI_HandleTypeDef *hspi)
 {
     UNUSED(hspi);
-    LED_ON(LED_GREENPORT, LED_GREEN1);  // DEBUG ONLY
+    //LED_ON(LED_GREENPORT, LED_GREEN1);  // DEBUG ONLY
     /* Update the second half of the buffer for the QUAD_DAC of motor #1 */
     piezoLoadBuffer(&piezoMotor1, UPPER_HALF_INDEX);
     /* Update the second half of the buffer for the QUAD_DAC of motor #2 */
     piezoLoadBuffer(&piezoMotor2, UPPER_HALF_INDEX);
     /* Update the second half of the buffer for the QUAD_DAC of motor #3 */
     piezoLoadBuffer(&piezoMotor3, UPPER_HALF_INDEX);
-    LED_OFF(LED_GREENPORT, LED_GREEN0);  // DEBUG ONLY
+    //LED_OFF(LED_GREENPORT, LED_GREEN0);  // DEBUG ONLY
 }
 
 
@@ -271,7 +271,7 @@ static void piezoCOMP_ISR_Trigger1(COMP_HandleTypeDef *hcomp)
     /* Activate the motor BRAKE */
     piezoSetBrake(PIEZO_MOTOR1, ENABLE);
     /* Error code */
-    LED_CODE(LED_REDPORT, LED_REDMASK, 1);
+    //LED_CODE(LED_REDPORT, LED_REDMASK, 1);
 }
 
 
@@ -288,7 +288,7 @@ static void piezoCOMP_ISR_Trigger2(COMP_HandleTypeDef *hcomp)
     /* Activate the motor BRAKE */
     piezoSetBrake(PIEZO_MOTOR2, ENABLE);
     /* Error code */
-    LED_CODE(LED_REDPORT, LED_REDMASK, 2);
+    //LED_CODE(LED_REDPORT, LED_REDMASK, 2);
 }
 
 
@@ -305,7 +305,7 @@ static void piezoCOMP_ISR_Trigger3(COMP_HandleTypeDef *hcomp)
     /* Activate the motor BRAKE */
     piezoSetBrake(PIEZO_MOTOR3, ENABLE);
     /* Error code */
-    LED_CODE(LED_REDPORT, LED_REDMASK, 4);
+    //LED_CODE(LED_REDPORT, LED_REDMASK, 4);
 }
 
 
