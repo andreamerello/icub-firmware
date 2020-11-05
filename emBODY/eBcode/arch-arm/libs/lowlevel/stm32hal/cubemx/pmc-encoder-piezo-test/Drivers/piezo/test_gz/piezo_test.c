@@ -10,25 +10,25 @@ int dbg_count = 0;
 #define DAC_CMD_LOADLATCH 0x2
 #define DAC_CMD_LOAD 0x0
 
-SPI_HandleTypeDef hspi1 = {.id = 1};
-SPI_HandleTypeDef hspi2 = {.id = 2};
-SPI_HandleTypeDef hspi3 = {.id = 3};
+SPI_HandleTypeDef hspi1 = {.id = 0};
+SPI_HandleTypeDef hspi2 = {.id = 1};
+SPI_HandleTypeDef hspi3 = {.id = 2};
 
 pthread_t dma_thread;
 struct  {
 	int size;
 	void *src;
-	int idx;
 	void *arg;
-} dma_data;
+	int idx;
+} dma_data[3];
 
 int dma_stop = 0;
 
 void(*dma_cb)(DMA_HandleTypeDef *_hdma) = NULL;
 void(*dma_h_cb)(DMA_HandleTypeDef *_hdma) = NULL;
 
-void(*spi_cb)(SPI_HandleTypeDef *_hdma) = NULL;
-void(*spi_h_cb)(SPI_HandleTypeDef *_hdma) = NULL;
+void(*spi_cb[3])(SPI_HandleTypeDef *_hdma) = {[0 ... 2] = NULL};
+void(*spi_h_cb[3])(SPI_HandleTypeDef *_hdma) = {[0 ... 2] = NULL};
 
 
 #define DAC_DECODE_VAL(x) ((((x) & 0xFF) << 8) | (((x) & 0xFF000000) >> 24))
@@ -37,77 +37,87 @@ void(*spi_h_cb)(SPI_HandleTypeDef *_hdma) = NULL;
 
 void *dma_worker(void *arg)
 {
+	char fname[128];
 	uint32_t out;
 	int ldac = 0;
-	int dac = 0;
+	int dac[3] = {0, 0, 0};
 	int err;
+	int id;
+	FILE *f[3];
 
-	FILE *f = fopen("test_out.csv", "w");
+	for (id = 0; id < 3; id++) {
+		sprintf(fname, "test_out_%d.csv", id);
+		f[id] = fopen(fname, "w");
+	}
+
 	while (!ACCESS_ONCE(dma_stop)) {
-		err = 0;
-		out = ACCESS_ONCE(((uint32_t*)dma_data.src)[dma_data.idx++]);
-		/*
-		 * dma_data.size is in 16-bit words
-		 * the DMA buffer is accessed in 32-bit words
-		 */
-		if (dma_data.idx == (dma_data.size / 4)) {
-			if (dma_h_cb)
-				dma_h_cb(dma_data.arg);
-			if (spi_h_cb)
-				spi_h_cb(dma_data.arg);
-			//printf("xfer h\n");
-		}
-
-		if (dma_data.idx == (dma_data.size / 2)) {
-			dma_data.idx = 0;
-			if (dma_cb)
-				dma_cb(dma_data.arg);
-			if (spi_cb) {
-				spi_cb(dma_data.arg);
-				dbg_count++;
+		for (id = 2; id >= 0; id--) {
+			err = 0;
+			out = ACCESS_ONCE(((uint32_t*)dma_data[id].src)[dma_data[id].idx++]);
+			/*
+			 * dma_data.size is in 16-bit words
+			 * the DMA buffer is accessed in 32-bit words
+			 */
+			if (dma_data[id].idx == (dma_data[id].size / 4)) {
+				if (dma_h_cb)
+					dma_h_cb(dma_data[id].arg);
+				if (spi_h_cb[id])
+					spi_h_cb[id](dma_data[id].arg);
+				//printf("xfer h\n");
 			}
-			//printf("xfer c\n");
-		}
-		usleep(50);
 
-		if (dac != DAC_DECODE_ADR(out)) {
-			printf("DAC idx SEQ error\n");
-			err = 1;
-		}
+			if (dma_data[id].idx == (dma_data[id].size / 2)) {
+				dma_data[id].idx = 0;
+				if (dma_cb)
+					dma_cb(dma_data[id].arg);
+				if (spi_cb[id]) {
+					spi_cb[id](dma_data[id].arg);
+					dbg_count++;
+				}
+				//printf("xfer c\n");
+			}
+			usleep(50);
 
-		if ((dac == 3) && (DAC_LDAC(out) != DAC_CMD_LOADLATCH)) {
-			printf("missing LOADLATCH error\n");
-			err = 1;
-		}
+			if (dac[id] != DAC_DECODE_ADR(out)) {
+				printf("DAC idx SEQ error; motor %d\n", id);
+				err = 1;
+			}
 
-		if ((dac != 3) && (DAC_LDAC(out) != DAC_CMD_LOAD)) {
-			printf("missing LOAD error\n");
-			err = 1;
-		}
+			if ((dac[id] == 3) && (DAC_LDAC(out) != DAC_CMD_LOADLATCH)) {
+				printf("missing LOADLATCH error; motor %d\n", id);
+				err = 1;
+			}
+
+			if ((dac[id] != 3) && (DAC_LDAC(out) != DAC_CMD_LOAD)) {
+				printf("missing LOAD error; motor %d\n", id);
+				err = 1;
+			}
 
 //		if (!err)
 //			printf("OK\n");
 
-		dac = (dac + 1) % 4;
+			dac[id] = (dac[id] + 1) % 4;
 
-		fprintf(f, "%u", DAC_DECODE_VAL(out));
-		if (dac == 3)
-			fprintf(f, "\n");
-		else
-			fprintf(f, ", ");
+			fprintf(f[id], "%u", DAC_DECODE_VAL(out));
+			if (dac[id] == 3)
+				fprintf(f[id], "\n");
+			else
+				fprintf(f[id], ", ");
 //		printf("0x%08x - %d %d %s\n", out,
 //		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
 //		       DAC_LDAC(out) ? "LDAC" : "");
 
+		}
 	}
-	fclose(f);
+	for (id = 0; id < 3; id++)
+		fclose(f[id]);
 }
 
 void HAL_DMA_RegisterCallback(DMA_HandleTypeDef *hdma,
 			      int CallbackID,
 			      void(*cb)(DMA_HandleTypeDef *_hdma))
 {
-	dma_data.arg = hdma;
+	dma_data[0].arg = hdma;
 	if (CallbackID == HAL_DMA_XFER_CPLT_CB_ID)
 		dma_cb = cb;
 	else
@@ -164,7 +174,8 @@ int main()
 	piezoInit(&cfg1, &cfg2, &cfg3);
 	piezoHighVoltage(ENABLE);
 	piezoSetStepFrequency(0, 200);
-	sleep(10);
+	piezoSetStepFrequency(1, 100);
+	sleep(5);
 	piezoSetBrake(0, ENABLE);
 	piezoSetBrake(1, ENABLE);
 	piezoSetBrake(2, ENABLE);
