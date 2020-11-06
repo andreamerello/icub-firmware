@@ -177,10 +177,15 @@ int main()
 	piezoSetStepFrequency(0, 200);
 	piezoSetStepFrequency(1, 100);
 	piezoSetStepFrequency(2, 57);
-	sleep(2);
+	sleep(1);
 	piezoSetMode(0, PIEZO_BRAKE);
-	sleep(2);
+	sleep(1);
 	piezoSetMode(1, PIEZO_BRAKE);
+	sleep(1);
+	piezoSetMode(0, PIEZO_NORMAL);
+	sleep(1);
+	piezoSetMode(0, PIEZO_FREEWHEELING);
+	piezoSetMode(1, PIEZO_FREEWHEELING);
 	sleep(1);
 	piezoSetMode(0, PIEZO_NORMAL);
 	piezoSetMode(2, PIEZO_BRAKE);
