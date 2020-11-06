@@ -174,7 +174,6 @@ int main()
 
 
 	piezoInit(&cfg1, &cfg2, &cfg3);
-	piezoHighVoltage(ENABLE);
 	piezoSetStepFrequency(0, 200);
 	piezoSetStepFrequency(1, 100);
 	piezoSetStepFrequency(2, 57);
