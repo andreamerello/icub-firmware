@@ -182,6 +182,11 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
                 pStatus->fsm.ramp_target[i] = PIEZO_MAXVALUE;
             break;
         case PIEZO_NORMAL:
+            /*
+             * GZ suggests to restart from the beginning of table in order
+             * to minimize current rush
+             */
+            pStatus->phaseAngle = angle = 0;
             piezoCalcWaves(pStatus, angle, pStatus->fsm.ramp_target);
             break;
         }
