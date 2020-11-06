@@ -5,14 +5,18 @@ import numpy as np
 import argparse
 from os import path
 
-def parse_csv(fname):
+def parse_csv(fname, col):
     values = []
     header = True
     with open(fname) as c:
         reader = csv.reader(c, delimiter=',')
         for row in reader:
             try:
-                v = int(row[3])
+                data = row[col]
+                if not header and data == '':
+                    #skip footer
+                    return values
+                v = int(data)
             except ValueError as e:
                 if header:
                     continue
@@ -68,6 +72,7 @@ def interpolate_decimate_data(values, n_points):
 def parse_cli():
     parser = argparse.ArgumentParser(description = "command line opts")
     parser.add_argument('fsrc', metavar = 'fsrc', help = 'src faulhaber file')
+    parser.add_argument('col', metavar = 'col', type=int, help = 'column to parse (i.e. 3 for delta)')
     parser.add_argument('n_points', metavar = 'n_points', type=int,
                         help="The target number of points for interpolation/decimation")
     parser.add_argument('max', metavar = 'max', type=int,
@@ -79,7 +84,7 @@ def parse_cli():
 
 args = parse_cli()
 
-values = parse_csv(args.fsrc)
+values = parse_csv(args.fsrc, args.col)
 if args.fpfx is None:
     fdst = path.splitext(path.basename(args.fsrc))[0]
 else:
