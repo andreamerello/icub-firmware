@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "../piezo_gz.h"
 #include "../gpl_utils.h"
-#include "../tables/table.c"
+#include "../tables/generated/delta_8192_table.c"
 
 int dbg_count = 0;
 

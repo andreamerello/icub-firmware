@@ -1,3 +1,3 @@
 set datafile separator ","
-plot "raw_table.csv" using 1 with linespoints lc rgb "blue", "interpolated_table.csv" using 1 with linespoints lc rgb "red", "interpolated_and_scaled_table.csv" using 1 with linespoints lc rgb "green"
+plot "generated/delta_8192_raw.csv" using 1 with linespoints lc rgb "blue", "generated/delta_8192_interpolated.csv" using 1 with linespoints lc rgb "red", "generated/delta_8192_interpolated_and_scaled.csv" using 1 with linespoints lc rgb "green"
 pause mouse close
