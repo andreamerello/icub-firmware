@@ -36,9 +36,9 @@ def write_csv(fname, values):
             c.write(str(int(v)) +',\n')
 
 
-def write_c_array(fname, values):
+def write_c_array(fname, values, arrayname):
     with open(fname, 'w') as f:
-        f.write("static const uint16_t PIEZO_PHASETABLE[{:d}] = {{\n\t".format(len(values)))
+        f.write("static const uint16_t " + arrayname + "[{:d}] = {{\n\t".format(len(values)))
         for i, v in enumerate(values):
             if i > 0 and i % 8 == 0:
                 f.write('\n\t')
@@ -79,7 +79,7 @@ def parse_cli():
                         help="max value of the wave")
     parser.add_argument('min', metavar = 'min', type=int,
                         help="min value of the wave")
-    parser.add_argument('fpfx', metavar = 'fpfx', help = 'file name prefix', nargs='?')
+    parser.add_argument('fpfx', metavar = 'fpfx', help = 'file name prefix / array_name', nargs='?')
     return parser.parse_args()
 
 args = parse_cli()
@@ -94,4 +94,4 @@ values = interpolate_decimate_data(values, args.n_points)
 write_csv(fdst + '_interpolated.csv', values)
 values = scale_data(values, args.max, args.min)
 write_csv(fdst +'_interpolated_and_scaled.csv', values)
-write_c_array(fdst +'_table.c', values)
+write_c_array(fdst +'_table.c', values, fdst)
