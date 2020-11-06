@@ -3,6 +3,7 @@
 import csv
 import numpy as np
 import argparse
+from os import path
 
 def parse_csv(fname):
     values = []
@@ -66,21 +67,26 @@ def interpolate_decimate_data(values, n_points):
 
 def parse_cli():
     parser = argparse.ArgumentParser(description = "command line opts")
+    parser.add_argument('fsrc', metavar = 'fsrc', help = 'src faulhaber file')
     parser.add_argument('n_points', metavar = 'n_points', type=int,
                         help="The target number of points for interpolation/decimation")
     parser.add_argument('max', metavar = 'max', type=int,
                         help="max value of the wave")
     parser.add_argument('min', metavar = 'min', type=int,
                         help="min value of the wave")
-
+    parser.add_argument('fpfx', metavar = 'fpfx', help = 'file name prefix', nargs='?')
     return parser.parse_args()
 
 args = parse_cli()
 
-values = parse_csv('Delta8_rhomb_8192p.csv')
-write_csv('raw_table.csv', values)
+values = parse_csv(args.fsrc)
+if args.fpfx is None:
+    fdst = path.splitext(path.basename(args.fsrc))[0]
+else:
+    fdst = args.fpfx
+write_csv(fdst + '_raw.csv', values)
 values = interpolate_decimate_data(values, args.n_points)
-write_csv('interpolated_table.csv', values)
+write_csv(fdst + '_interpolated.csv', values)
 values = scale_data(values, args.max, args.min)
-write_csv('interpolated_and_scaled_table.csv', values)
-write_c_array('table.c', values)
+write_csv(fdst +'_interpolated_and_scaled.csv', values)
+write_c_array(fdst +'_table.c', values)
