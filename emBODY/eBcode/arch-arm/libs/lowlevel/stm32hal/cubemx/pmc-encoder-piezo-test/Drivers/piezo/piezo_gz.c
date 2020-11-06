@@ -182,7 +182,7 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
             break;
         case PIEZO_NORMAL:
             piezoCalcWaves(pStatus, angle, pStatus->fsm.ramp_target);
-            break; /* TODO */
+            break;
         }
     }
 
