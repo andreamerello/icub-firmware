@@ -249,6 +249,18 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 }
 
 /*******************************************************************************************************************//**
+ * @brief   Control the ON/OFF status of the voltage booster. The VPP voltage rises to 47.5V in less than 1 ms
+ * @param   ENABLE  Switch ON the voltage booster. VPP rises to 47.5V
+ *          DISABLE Switch OFF the voltage booster. VPP falls to VIN voltage
+ * @return  void
+ */
+static void piezoHighVoltage(FunctionalState enable)
+{
+    /* Enable or disable the VPP power supply */
+    HAL_GPIO_WritePin(VPPEN_GPIO_Port, VPPEN_Pin, (enable != DISABLE)? GPIO_PIN_SET : GPIO_PIN_RESET);
+}
+
+/*******************************************************************************************************************//**
  * @brief   Interrupt callback function. This function is called by the DMA interrupt handler following the completion
  *          of  transmission of the first half buffer to the SPI channel connected to external DAC of motor 1.
  *          The callback function writes new values on the first half of the buffers of all the three motors
@@ -401,12 +413,14 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_COMPLETE_CB_ID,      piezoDMA_ISR_TC);
     __HAL_DMA_ENABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT);
 
+    /* Enable HV generator */
+    piezoHighVoltage(ENABLE);
+
     /* Clear DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
     HAL_Delay(5U);
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
-
 
     /* Start DMA for SPI 3 */
     SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */
@@ -419,20 +433,6 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     /* Start DMA for SPI 1 (this must be the last operation) */
     HAL_SPI_Transmit_DMA(&hspi1,(void *)&(piezoMotor1.dmaBuffer), sizeof(piezoMotor1.dmaBuffer)/sizeof(uint16_t));
 }
-
-
-/*******************************************************************************************************************//**
- * @brief   Control the ON/OFF status of the voltage booster. The VPP voltage rises to 47.5V in less than 1 ms
- * @param   ENABLE  Switch ON the voltage booster. VPP rises to 47.5V
- *          DISABLE Switch OFF the voltage booster. VPP falls to VIN voltage
- * @return  void
- */
-void piezoHighVoltage(FunctionalState enable)
-{
-    /* Enable or disable the VPP power supply */
-    HAL_GPIO_WritePin(VPPEN_GPIO_Port, VPPEN_Pin, (enable != DISABLE)? GPIO_PIN_SET : GPIO_PIN_RESET);
-}
-
 
 /*******************************************************************************************************************//**
  * @brief   Set the step frequency and the revolution direction of the piezo-motor.
