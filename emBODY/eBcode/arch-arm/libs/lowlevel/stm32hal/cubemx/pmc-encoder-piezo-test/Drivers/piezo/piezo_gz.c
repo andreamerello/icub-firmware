@@ -115,7 +115,12 @@ static PiezoMotorStatus_t * const pStatusTable[] = {&piezoMotor1, &piezoMotor2, 
 
 /* Local functions ****************************************************************************************************/
 
-
+/*******************************************************************************************************************//**
+ * @brief   Load the four phase values into the DMA buffer, applying all required HW quirks.
+ * @param   *pQSamp     Pointer to the quad-sample slot in the DMA buffer
+            vals[4]     Phase values to be load into the DMA buffer
+ * @return  void
+ */
 static inline void piezoLoadQSmp(QuadSample_t *pQSmp, uint32_t vals[4])
 {
     int i;
@@ -127,6 +132,13 @@ static inline void piezoLoadQSmp(QuadSample_t *pQSmp, uint32_t vals[4])
     }
 }
 
+/*******************************************************************************************************************//**
+ * @brief   Provide values for the 4 pahses taken from the phaseTable.
+ * @param   *pStatus    Pointer to the PiezoMotorStatus_t structure associated to the motor to be updated
+ *          angle       Represent the current motor angle
+ *          vals[4]     Will be filled with phase values
+ * @return  void
+ */
 static inline void piezoCalcWaves(PiezoMotorStatus_t *pStatus, uint32_t angle, uint32_t vals[4])
 {
     /* Phase value for normal wave */
@@ -140,8 +152,9 @@ static inline void piezoCalcWaves(PiezoMotorStatus_t *pStatus, uint32_t angle, u
 }
 
 /*******************************************************************************************************************//**
- * @brief   Load half buffer of the specified Quad-DAC with consecutive samples taken from phaseTable[]. The function
- *          scans phaseTable with the speed phaseDelta given for the motor, and updates phaseAngle at the end.
+ * @brief   Load half buffer of the specified Quad-DAC with proper samples. This handles both normal running
+            condition and steady condition (i.e. brake/freewheeling), and it implements the FSM for generating
+            ramps when mode changes (to avoid current rushes).
  *          This function must be called by the callback functions of the DMA linked to SPI1 peripheral.
  * @param   *pStatus    Pointer to the PiezoMotorStatus_t structure associated to the motor to be updated
  *          index       Index of the half buffer to be updated. It must be one of the followin values:
@@ -149,7 +162,6 @@ static inline void piezoCalcWaves(PiezoMotorStatus_t *pStatus, uint32_t angle, u
  *                      UPPER_HALF_INDEX    Select the second half buffer
  * @return  void
  */
-
 static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 {
     int i;
