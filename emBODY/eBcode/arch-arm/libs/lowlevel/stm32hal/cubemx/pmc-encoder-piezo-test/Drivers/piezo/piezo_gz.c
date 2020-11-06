@@ -154,6 +154,7 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 {
     int i;
     uint32_t cmd;
+    int k1, k2;
     uint32_t val[4];
     /* Number of samples to process in the buffer */
     unsigned n = QUADSAMPLES_BUFFER_LENGHT/2;
@@ -189,10 +190,12 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
     /* check if we are in FSM_RAMP state */
     if (pStatus->fsm.state == FSM_RAMP) {
         for (; pStatus->fsm.ramp_counter < PIEZO_RAMP_SAMPLES; pStatus->fsm.ramp_counter++) {
-            for (i = 0; i < 4; i++)
-                val[i] = (pStatus->fsm.ramp_target[i] +
-                          pStatus->fsm.last_vals[i]) *
-                    pStatus->fsm.ramp_counter / PIEZO_RAMP_SAMPLES;
+            for (i = 0; i < 4; i++) {
+                k1 = (PIEZO_RAMP_SAMPLES - pStatus->fsm.ramp_counter);
+                k2 = pStatus->fsm.ramp_counter;
+                val[i] = (pStatus->fsm.ramp_target[i] * k2 +
+                          pStatus->fsm.last_vals[i] * k1) / PIEZO_RAMP_SAMPLES;
+            }
             if (n-- == 0)
                 return;
             piezoLoadQSmp(pQSmp++, val);
