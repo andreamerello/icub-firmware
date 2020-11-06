@@ -158,6 +158,7 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 int main()
 {
 	piezoMotorCfg_t cfg1, cfg2, cfg3;
+	int i;
 
 	//static const uint16_t phaseTable[] =
 	//{
@@ -184,7 +185,11 @@ int main()
 	piezoSetMode(1, PIEZO_BRAKE);
 	sleep(1);
 	piezoSetMode(0, PIEZO_NORMAL);
-	sleep(1);
+	for (i = 0; i < 50; i++) {
+		usleep(20000);
+		piezoSetStepFrequency(0, 200 - i*2);
+	}
+
 	piezoSetMode(0, PIEZO_FREEWHEELING);
 	piezoSetMode(1, PIEZO_FREEWHEELING);
 	sleep(1);
