@@ -4,6 +4,7 @@
 #include "../piezo_gz.h"
 #include "../gpl_utils.h"
 #include "../tables/generated/delta_8192_table.c"
+#include "../tables/generated/delta_1024_table.c"
 #include "../tables/generated/rhomb_8192_table.c"
 
 int dbg_count = 0;
@@ -166,16 +167,20 @@ int main()
 	//    #include "PhaseTable.csv"
 	//};
 
-	cfg1.phaseTable = delta_8192;
+	cfg1.phaseTable = delta_1024;
 	cfg2.phaseTable = delta_8192;
 	cfg3.phaseTable = rhomb_8192;
 
-	cfg1.phaseTableLen = 8192;
+	cfg1.phaseTableLen = 1024;
 	cfg2.phaseTableLen = 8192;
 	cfg3.phaseTableLen = 8192;
 
 
 	piezoInit(&cfg1, &cfg2, &cfg3);
+	piezoSetStepFrequency(0, 5);
+	piezoSetStepFrequency(1, 5);
+	piezoSetStepFrequency(2, 57);
+	sleep(2);
 	piezoSetStepFrequency(0, 200);
 	piezoSetStepFrequency(1, 100);
 	piezoSetStepFrequency(2, 57);
