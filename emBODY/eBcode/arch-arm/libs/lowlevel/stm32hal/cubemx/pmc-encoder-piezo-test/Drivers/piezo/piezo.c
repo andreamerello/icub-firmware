@@ -81,6 +81,7 @@ typedef struct
     volatile int32_t phaseAngle;
     volatile int32_t phaseDelta;
     volatile piezoMode_t phaseCntrl;
+    volatile bool overcurrent;
     QuadSample_t dmaBuffer[QUADSAMPLES_BUFFER_LENGHT];
     int shift;
     uint32_t mask;
@@ -179,59 +180,73 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
     /* Set the pointer to the selected buffer */
     QuadSample_t *pQSmp = &(pStatus->dmaBuffer[index]);
 
-    /* on operation state change trigger a ramp */
-    if (cntrl != pStatus->fsm.mode) {
-        pStatus->fsm.mode = cntrl;
-        pStatus->fsm.state = FSM_RAMP;
-        pStatus->fsm.ramp_counter = 0;
-
-        switch (pStatus->fsm.mode) {
-        case PIEZO_BRAKE:
-            for (i = 0; i < 4; i++)
-                pStatus->fsm.ramp_target[i] = PIEZO_MINVALUE;
-            break;
-        case PIEZO_FREEWHEELING:
-            for (i = 0; i < 4; i++)
-                pStatus->fsm.ramp_target[i] = PIEZO_MAXVALUE;
-            break;
-        case PIEZO_NORMAL:
-            /*
-             * GZ suggests to restart from the beginning of table in order
-             * to minimize current rush
-             */
-            pStatus->phaseAngle = angle = 0;
-            piezoCalcWaves(pStatus, angle, pStatus->fsm.ramp_target);
-            break;
-        }
-    }
-
-    /* check if we are in FSM_RAMP state */
-    if (pStatus->fsm.state == FSM_RAMP) {
-        ACCESS_ONCE(pStatus->state) = STATE_RAMPING;
-        for (; pStatus->fsm.ramp_counter < PIEZO_RAMP_SAMPLES; pStatus->fsm.ramp_counter++) {
-            for (i = 0; i < 4; i++) {
-                k1 = (PIEZO_RAMP_SAMPLES - pStatus->fsm.ramp_counter);
-                k2 = pStatus->fsm.ramp_counter;
-                val[i] = (pStatus->fsm.ramp_target[i] * k2 +
-                          pStatus->fsm.last_vals[i] * k1) / PIEZO_RAMP_SAMPLES;
-            }
-            if (n-- == 0)
-                return;
-            piezoLoadQSmp(pQSmp++, val);
-        }
-
-        /* ramp finished */
+    /*
+     * If we got overcurrent, then it isn't time to play with ramps
+     * and other kind ways. Just stop this thing
+     */
+    if (pStatus->overcurrent) {
+        pStatus->fsm.state = FSM_STEADY;
+        pStatus->fsm.mode = PIEZO_BRAKE;
         for (i = 0; i < 4; i++)
-            pStatus->fsm.last_vals[i] = pStatus->fsm.ramp_target[i];
-        if (pStatus->fsm.mode == PIEZO_NORMAL)
-            pStatus->fsm.state = FSM_RUN;
-        else
-            pStatus->fsm.state = FSM_STEADY;
+            pStatus->fsm.last_vals[i] = PIEZO_MINVALUE;
+    } else {
+        /* on operation state change trigger a ramp */
+        if (cntrl != pStatus->fsm.mode) {
+            pStatus->fsm.mode = cntrl;
+            pStatus->fsm.state = FSM_RAMP;
+            pStatus->fsm.ramp_counter = 0;
+
+            switch (pStatus->fsm.mode) {
+            case PIEZO_BRAKE:
+                for (i = 0; i < 4; i++)
+                    pStatus->fsm.ramp_target[i] = PIEZO_MINVALUE;
+                break;
+            case PIEZO_FREEWHEELING:
+                for (i = 0; i < 4; i++)
+                    pStatus->fsm.ramp_target[i] = PIEZO_MAXVALUE;
+                break;
+            case PIEZO_NORMAL:
+                /*
+                 * GZ suggests to restart from the beginning of table in order
+                 * to minimize current rush
+                 */
+                pStatus->phaseAngle = angle = 0;
+                piezoCalcWaves(pStatus, angle, pStatus->fsm.ramp_target);
+                break;
+            }
+        }
+
+        /* check if we are in FSM_RAMP state */
+        if (pStatus->fsm.state == FSM_RAMP) {
+            ACCESS_ONCE(pStatus->state) = STATE_RAMPING;
+            for (; pStatus->fsm.ramp_counter < PIEZO_RAMP_SAMPLES; pStatus->fsm.ramp_counter++) {
+                for (i = 0; i < 4; i++) {
+                    k1 = (PIEZO_RAMP_SAMPLES - pStatus->fsm.ramp_counter);
+                    k2 = pStatus->fsm.ramp_counter;
+                    val[i] = (pStatus->fsm.ramp_target[i] * k2 +
+                              pStatus->fsm.last_vals[i] * k1) / PIEZO_RAMP_SAMPLES;
+                }
+                if (n-- == 0)
+                    return;
+                piezoLoadQSmp(pQSmp++, val);
+            }
+
+            /* ramp finished */
+            for (i = 0; i < 4; i++)
+                pStatus->fsm.last_vals[i] = pStatus->fsm.ramp_target[i];
+            if (pStatus->fsm.mode == PIEZO_NORMAL)
+                pStatus->fsm.state = FSM_RUN;
+            else
+                pStatus->fsm.state = FSM_STEADY;
+        }
     }
 
     /* recheck FSM state; we could get a new state from previous FSM_RAMP check */
     if (pStatus->fsm.state == FSM_STEADY) {
-        ACCESS_ONCE(pStatus->state) = STATE_STEADY;
+        if (pStatus->overcurrent)
+            ACCESS_ONCE(pStatus->state) = STATE_OVERCURRENT;
+        else
+            ACCESS_ONCE(pStatus->state) = STATE_STEADY;
         /* Fill the half-buffer with the value for steady voltage */
         for ( ; n-- ; pQSmp++)
             piezoLoadQSmp(pQSmp, pStatus->fsm.last_vals);
@@ -319,7 +334,7 @@ static void piezoCOMP_ISR_Trigger1(COMP_HandleTypeDef *hcomp)
     /* Stop the comparator */
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
-    piezoSetMode(PIEZO_MOTOR1, PIEZO_BRAKE);
+    pStatusTable[PIEZO_MOTOR1]->overcurrent = true;
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 1);
 }
@@ -336,7 +351,7 @@ static void piezoCOMP_ISR_Trigger2(COMP_HandleTypeDef *hcomp)
     /* Stop the comparator */
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
-    piezoSetMode(PIEZO_MOTOR2, PIEZO_BRAKE);
+    pStatusTable[PIEZO_MOTOR2]->overcurrent = true;
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 2);
 }
@@ -353,7 +368,7 @@ static void piezoCOMP_ISR_Trigger3(COMP_HandleTypeDef *hcomp)
     /* Stop the comparator */
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
-    piezoSetMode(PIEZO_MOTOR3, PIEZO_BRAKE);
+    pStatusTable[PIEZO_MOTOR3]->overcurrent = true;
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 4);
 }
@@ -395,6 +410,7 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
         pStatusTable[i]->mask = (1 << _shift) - 1;
         pStatusTable[i]->phaseAngle = 0;
         pStatusTable[i]->phaseDelta = 0;
+        pStatusTable[i]->overcurrent = false;
         pStatusTable[i]->phaseCntrl = PIEZO_NORMAL;
         /* to trigger a ramp from zero V to table setpoint */
         pStatusTable[i]->fsm.mode = PIEZO_BRAKE;

@@ -45,7 +45,8 @@ typedef enum {
 	STATE_NOT_INIT,
 	STATE_STEADY,
 	STATE_NORMAL,
-	STATE_RAMPING
+	STATE_RAMPING,
+	STATE_OVERCURRENT,
 } piezoMotorState_t;
 
 /* Exported macros ****************************************************************************************************/
