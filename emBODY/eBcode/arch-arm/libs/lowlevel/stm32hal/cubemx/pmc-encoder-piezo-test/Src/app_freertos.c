@@ -27,7 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdlib.h> /* abs() */
-#include "../Drivers/piezo/piezo_gz.h"
+#include "../Drivers/piezo/piezo.h"
 #include "../Drivers/piezo/tables/generated/delta_8192_table.c"
 #include "../Drivers/piezo/tables/generated/delta_1024_table.c"
 #include "../Drivers/piezo/tables/generated/rhomb_8192_table.c"
