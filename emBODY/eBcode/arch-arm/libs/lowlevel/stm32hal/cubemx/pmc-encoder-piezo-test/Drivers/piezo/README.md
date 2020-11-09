@@ -53,12 +53,14 @@ Initialize the piezo driver. The three parameters contains configuration for eac
 the basically just serves for specifying the piezo table to be used.
 
 `HAL_StatusTypeDef piezoSetStepFrequency(piezoMotor_t motor, int32_t freq)`
+
 `HAL_StatusTypeDef piezoGetStepFrequency(piezoMotor_t motor, int32_t *pFreq)`
 
 Setter and getter for the *frequency* of the piezo microstep. It is basically proportional to the motor speed.
 It can be negative.
 
 `HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)`
+
 `HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode)`
 
 Setter and getter for the motor operating mode. It can be one of the following values:
