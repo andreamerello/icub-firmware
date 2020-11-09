@@ -156,8 +156,52 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 
 }
 
+int piezo_test_check_state(int m, piezoMotorState_t expected, int timeout_ms)
+{
+	piezoMotorState_t state;
+
+	timeout_ms /= 10;
+
+	do  {
+		state = piezoGetState(m);
+		if (timeout_ms-- == 0)
+			break;
+		usleep(10000);
+	} while (state != expected);
+
+	if (state != expected) {
+		printf("wrong state on motor %d (got %d, expected %d)\n",
+		       m, state, expected);
+		return -1;
+	}
+
+	return 0;
+}
+
+int piezo_set_state_and_check(int m, piezoMode_t mode)
+{
+	piezoMotorState_t s;
+	switch (mode) {
+	case PIEZO_NORMAL:
+		s = STATE_NORMAL;
+		break;
+
+	case PIEZO_BRAKE:
+	case PIEZO_FREEWHEELING:
+		s = STATE_STEADY;
+		break;
+	default:
+		printf("unknown state??\n");
+		return -1;
+	}
+
+	piezoSetMode(m, mode);
+	return piezo_test_check_state(m, s, 500);
+}
+
 int main()
 {
+
 	piezoMotorCfg_t cfg1, cfg2, cfg3;
 	int i;
 
@@ -175,6 +219,9 @@ int main()
 	cfg2.phaseTableLen = 8192;
 	cfg3.phaseTableLen = 8192;
 
+	for (i = 0; i < 3; i++) {
+		piezo_test_check_state(i, STATE_NOT_INIT, 0);
+	}
 
 	piezoInit(&cfg1, &cfg2, &cfg3);
 	piezoSetStepFrequency(0, 5);
@@ -185,21 +232,21 @@ int main()
 	piezoSetStepFrequency(1, 100);
 	piezoSetStepFrequency(2, 57);
 	sleep(1);
-	piezoSetMode(0, PIEZO_BRAKE);
+	piezo_set_state_and_check(0, PIEZO_BRAKE);
 	sleep(1);
-	piezoSetMode(1, PIEZO_BRAKE);
+	piezo_set_state_and_check(1, PIEZO_BRAKE);
 	sleep(1);
-	piezoSetMode(0, PIEZO_NORMAL);
+	piezo_set_state_and_check(0, PIEZO_NORMAL);
 	for (i = 0; i < 50; i++) {
 		usleep(20000);
 		piezoSetStepFrequency(0, 200 - i*2);
 	}
 
-	piezoSetMode(0, PIEZO_FREEWHEELING);
-	piezoSetMode(1, PIEZO_FREEWHEELING);
+	piezo_set_state_and_check(0, PIEZO_FREEWHEELING);
+	piezo_set_state_and_check(1, PIEZO_FREEWHEELING);
 	sleep(1);
-	piezoSetMode(0, PIEZO_NORMAL);
-	piezoSetMode(2, PIEZO_BRAKE);
+	piezo_set_state_and_check(0, PIEZO_NORMAL);
+	piezo_set_state_and_check(2, PIEZO_BRAKE);
 	sleep(1);
 
 	HAL_SPI_DMAStop(&hspi1);
