@@ -547,7 +547,7 @@ HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle)
 }
 
 /*******************************************************************************************************************//**
- * @brief   Select operation mode
+ * @brief   Select operation mode of the motor
  * @param   motor   Number of the motor
  *          mode    One of the following values:
  *                  PIEZO_NORMAL piezo motor is driven normally
@@ -563,6 +563,28 @@ HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)
         return HAL_ERROR;
 
     pStatusTable[motor]->phaseCntrl = mode;
+    return HAL_OK;
+}
+
+/*******************************************************************************************************************//**
+ * @brief   Get the operation mode of the motor
+ * @param   motor   Number of the motor
+ *          mode    pointer to a piezoMode_t variable to be loaded with the
+ *                  motor operation mode. Operation mode could be one of the
+ *                  following values:
+ *                  PIEZO_NORMAL piezo motor is driven normally
+ *                  PIEZO_BRAKE piezo motor is held in brake state
+ *                  PIEZO_FREEWHEELING piezo motor is left free
+ * @return  One of the following values:
+ *          HAL_ERROR   arguments error
+ *          HAL_OK      operation terminated without errors
+ */
+HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode)
+{
+    if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
+        return HAL_ERROR;
+
+    *mode = pStatusTable[motor]->phaseCntrl;
     return HAL_OK;
 }
 
