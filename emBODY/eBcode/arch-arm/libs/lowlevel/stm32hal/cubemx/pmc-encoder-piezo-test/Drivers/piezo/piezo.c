@@ -610,4 +610,26 @@ HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)
     return HAL_OK;
 }
 
+HAL_StatusTypeDef piezoOvercurrentClear(piezoMotor_t motor)
+{
+    if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
+        return HAL_ERROR;
+
+    if (!ACCESS_ONCE(pStatusTable[motor]->overcurrent))
+        return HAL_OK;
+
+    ACCESS_ONCE(pStatusTable[motor]->overcurrent) = 0;
+    switch (motor) {
+    case 0:
+        HAL_COMP_Start(&hcomp1);
+        break;
+    case 1:
+        HAL_COMP_Start(&hcomp2);
+        break;
+    case 2:
+        HAL_COMP_Start(&hcomp3);
+        break;
+    }
+}
+
 /* END OF FILE ********************************************************************************************************/
