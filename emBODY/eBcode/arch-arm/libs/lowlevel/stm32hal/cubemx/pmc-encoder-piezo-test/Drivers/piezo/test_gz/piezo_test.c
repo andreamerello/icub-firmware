@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "../piezo_gz.h"
+#include "../piezo.h"
 #include "../gpl_utils.h"
 #include "../tables/generated/delta_8192_table.c"
 #include "../tables/generated/delta_1024_table.c"
