@@ -23,11 +23,19 @@ typedef int HAL_StatusTypeDef;
 #define HAL_ERROR -1
 #define HAL_OK 0
 
-typedef int COMP_HandleTypeDef;
+typedef struct {
+	int id;
+} COMP_HandleTypeDef;
+
+extern COMP_HandleTypeDef hcomp1;
+extern COMP_HandleTypeDef hcomp2;
+extern COMP_HandleTypeDef hcomp3;
 
 #define HAL_COMP_Stop(x)
 #define HAL_COMP_Start(x)
-#define HAL_COMP_RegisterCallback(...)
+#define HAL_COMP_TRIGGER_CB_ID 0xcafe
+extern void HAL_COMP_RegisterCallback(COMP_HandleTypeDef *hcomp, int a,
+				      void(*cb)(COMP_HandleTypeDef *hcomp));
 
 typedef struct {
 	int dummy;
