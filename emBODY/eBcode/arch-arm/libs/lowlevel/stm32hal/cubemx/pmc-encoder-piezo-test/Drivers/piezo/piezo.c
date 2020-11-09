@@ -630,6 +630,8 @@ HAL_StatusTypeDef piezoOvercurrentClear(piezoMotor_t motor)
         HAL_COMP_Start(&hcomp3);
         break;
     }
+
+    return HAL_OK;
 }
 
 /* END OF FILE ********************************************************************************************************/
