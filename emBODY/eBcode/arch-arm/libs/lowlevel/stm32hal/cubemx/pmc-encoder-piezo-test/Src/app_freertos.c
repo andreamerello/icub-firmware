@@ -26,6 +26,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdlib.h> /* abs() */
+#include "../Drivers/piezo/piezo_gz.h"
+#include "../Drivers/piezo/tables/generated/delta_8192_table.c"
+#include "../Drivers/piezo/tables/generated/delta_1024_table.c"
+#include "../Drivers/piezo/tables/generated/rhomb_8192_table.c"
 
 /* USER CODE END Includes */
 
@@ -110,11 +115,35 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_MainTask */
 void MainTask(void *argument)
 {
-  /* USER CODE BEGIN MainTask */
+    int i;
+    piezoMotorCfg_t cfg1, cfg2, cfg3;
+    uint32_t vel[3] = {0, 0, 0};
+    uint32_t vel_max[3] = {1000, 1500, 2000};
+    uint32_t delta[3] = {50, 50, 50};
+
+    /* USER CODE BEGIN MainTask */
+    cfg1.phaseTable = delta_1024;
+	cfg2.phaseTable = delta_8192;
+	cfg3.phaseTable = rhomb_8192;
+
+	cfg1.phaseTableLen = 1024;
+	cfg2.phaseTableLen = 8192;
+	cfg3.phaseTableLen = 8192;
+
+	piezoInit(&cfg1, &cfg2, &cfg3);
+
+    vel[0] = 0;
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
+	while (1) {
+        for (i = 0; i < 3; i++) {
+            piezoSetStepFrequency(i, vel[i]);
+            vel[i] += delta[i];
+            if (abs(vel[i]) > vel_max[i]) {
+                vel[i] = (vel[i] > 0) ? vel_max[i] : -vel_max[i];
+                delta[i] = -delta[i];
+            }
+        }
+        osDelay(100);
   }
   /* USER CODE END MainTask */
 }
