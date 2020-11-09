@@ -609,6 +609,13 @@ HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)
     return HAL_OK;
 }
 
+/*******************************************************************************************************************//**
+ * @brief   Clears overcurrent state and (try to) get back to normal operation
+ * @param   motor   Number of the motor
+ * @return  One of the following values:
+ *          HAL_ERROR   arguments error
+ *          HAL_OK      operation terminated without errors
+ */
 HAL_StatusTypeDef piezoOvercurrentClear(piezoMotor_t motor)
 {
     if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
