@@ -96,6 +96,7 @@ typedef struct
         uint32_t last_vals[4];
         int ramp_counter;
     } fsm;
+    piezoMotorState_t state;
 } PiezoMotorStatus_t ;
 
 
@@ -105,9 +106,9 @@ typedef struct
 static int32_t piezoFreqConst;
 
 /* Piezo motors status descriptors */
-static PiezoMotorStatus_t piezoMotor1 ;
-static PiezoMotorStatus_t piezoMotor2 ;
-static PiezoMotorStatus_t piezoMotor3 ;
+static PiezoMotorStatus_t piezoMotor1 = {.state = STATE_NOT_INIT};
+static PiezoMotorStatus_t piezoMotor2 = {.state = STATE_NOT_INIT};
+static PiezoMotorStatus_t piezoMotor3 = {.state = STATE_NOT_INIT};
 
 /* Piezo Motors number conversion */
 static PiezoMotorStatus_t * const pStatusTable[] = {&piezoMotor1, &piezoMotor2, &piezoMotor3};
@@ -206,6 +207,7 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 
     /* check if we are in FSM_RAMP state */
     if (pStatus->fsm.state == FSM_RAMP) {
+        ACCESS_ONCE(pStatus->state) = STATE_RAMPING;
         for (; pStatus->fsm.ramp_counter < PIEZO_RAMP_SAMPLES; pStatus->fsm.ramp_counter++) {
             for (i = 0; i < 4; i++) {
                 k1 = (PIEZO_RAMP_SAMPLES - pStatus->fsm.ramp_counter);
@@ -229,10 +231,12 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 
     /* recheck FSM state; we could get a new state from previous FSM_RAMP check */
     if (pStatus->fsm.state == FSM_STEADY) {
+        ACCESS_ONCE(pStatus->state) = STATE_STEADY;
         /* Fill the half-buffer with the value for steady voltage */
         for ( ; n-- ; pQSmp++)
             piezoLoadQSmp(pQSmp, pStatus->fsm.last_vals);
     } else if (pStatus->fsm.state == FSM_RUN) {
+        ACCESS_ONCE(pStatus->state) = STATE_NORMAL;
         /* Fill the half-buffer with values taken from phaseTable[] */
         for ( ; n-- ; pQSmp++)
         {
@@ -546,5 +550,9 @@ HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)
     return HAL_OK;
 }
 
+piezoMotorState_t piezoGetState(piezoMotor_t motor)
+{
+	return ACCESS_ONCE(pStatusTable[motor]->state);
+}
 
 /* END OF FILE ********************************************************************************************************/

@@ -41,6 +41,13 @@ typedef struct {
     int phaseTableLen;
 } piezoMotorCfg_t;
 
+typedef enum {
+	STATE_NOT_INIT,
+	STATE_STEADY,
+	STATE_NORMAL,
+	STATE_RAMPING
+} piezoMotorState_t;
+
 /* Exported macros ****************************************************************************************************/
 
 /* Exported functions *************************************************************************************************/
@@ -51,6 +58,7 @@ extern HAL_StatusTypeDef piezoGetStepFrequency(piezoMotor_t motor, int32_t *pFre
 extern HAL_StatusTypeDef piezoSetStepAngle(piezoMotor_t motor, uint32_t angle);
 extern HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle);
 extern HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode);
+extern piezoMotorState_t piezoGetState(piezoMotor_t motor);
 
 #ifdef __cplusplus
   } /* extern "C" */
