@@ -267,8 +267,20 @@ int main()
   	piezoSetStepFrequency(0, -100);
 	piezo_set_state_and_check(2, PIEZO_BRAKE);
 	sleep(1);
-	piezo_test_emulate_overcurrent(0);
-	piezo_test_check_state(0, STATE_OVERCURRENT, 500);
+
+	/* check for OC from run, freewheel and brake states */
+	for (i = 0; i < 3; i++) {
+		piezo_test_emulate_overcurrent(i);
+		piezo_test_check_state(i, STATE_OVERCURRENT, 500);
+	}
+
+	/* try to change mode; it must fail and stay in overcurrent */
+	piezoSetMode(1, PIEZO_FREEWHEELING);
+	usleep(500000);
+	piezo_test_check_state(0, STATE_OVERCURRENT, 0);
+	piezoSetMode(0, PIEZO_NORMAL);
+	usleep(500000);
+	piezo_test_check_state(0, STATE_OVERCURRENT, 0);
 	sleep(1);
 
 	HAL_SPI_DMAStop(&hspi1);
