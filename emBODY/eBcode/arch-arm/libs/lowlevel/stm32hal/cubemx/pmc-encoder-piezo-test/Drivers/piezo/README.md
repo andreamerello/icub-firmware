@@ -41,8 +41,13 @@ The test programs can perform two checks:
 configuration #defines
 ----------------------
 
-To be written
+There are some compile time defines. Some of them are probably part of magic recipes that no one really want to change. Some are just straightforward constants that have not to be changed. Few could be tweaked by the user.
 
+`#define QUADSAMPLES_BUFFER_LENGHT   (256)`
+The higher the value, the fewer the interrupts, the less critical the timing, the higher the latency to respond to user commands (i.e. velocity changes).
+
+`#define PIEZO_RAMP_SAMPLES 10`
+Number of points the driver will insert when ramping currents up/down. This should be choosen so that a transition from *BRAKE* to *FREEWHEEL* does not cause a spurious overcurrent fault. It depends by the motor model (i.e. parastic capacitance); choose the greatest of the three.
 
 APIs
 ----
