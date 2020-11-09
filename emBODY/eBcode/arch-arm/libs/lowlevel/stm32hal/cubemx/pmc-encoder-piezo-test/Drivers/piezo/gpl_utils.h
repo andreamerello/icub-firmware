@@ -5,4 +5,6 @@
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+extern int find_last_set_bit(unsigned int x);
+
 #endif

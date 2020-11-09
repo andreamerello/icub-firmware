@@ -390,7 +390,7 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 
     /* precalc shift & mask factors and clear/initialize variables */
     for (i = 0; i < ARRAY_SIZE(pStatusTable); i++) {
-        _shift = fls(pStatusTable[i]->cfg.phaseTableLen) - 1;
+        _shift = find_last_set_bit(pStatusTable[i]->cfg.phaseTableLen) - 1;
         pStatusTable[i]->shift = 32 - _shift;
         pStatusTable[i]->mask = (1 << _shift) - 1;
         pStatusTable[i]->phaseAngle = 0;

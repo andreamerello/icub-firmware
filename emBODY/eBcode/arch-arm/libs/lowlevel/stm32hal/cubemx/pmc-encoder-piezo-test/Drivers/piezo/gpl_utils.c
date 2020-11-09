@@ -1,7 +1,7 @@
-#include "gpl_fls.h"
+#include "gpl_utils.h"
 
 /* all this stuff is stolen from, or based on code from, the Linux kernel */
-int fls(unsigned int x)
+int find_last_set_bit(unsigned int x)
 {
 	int r = 32;
 
