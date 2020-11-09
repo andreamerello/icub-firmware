@@ -167,7 +167,6 @@ static inline void piezoCalcWaves(PiezoMotorStatus_t *pStatus, uint32_t angle, u
 static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 {
     int i;
-    uint32_t cmd;
     int k1, k2;
     uint32_t val[4];
     /* Number of samples to process in the buffer */
