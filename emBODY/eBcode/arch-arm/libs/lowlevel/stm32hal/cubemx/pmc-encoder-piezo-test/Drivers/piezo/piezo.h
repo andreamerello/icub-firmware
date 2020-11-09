@@ -56,8 +56,6 @@ typedef enum {
 extern void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3);
 extern HAL_StatusTypeDef piezoSetStepFrequency(piezoMotor_t motor, int32_t freq);
 extern HAL_StatusTypeDef piezoGetStepFrequency(piezoMotor_t motor, int32_t *pFreq);
-extern HAL_StatusTypeDef piezoSetStepAngle(piezoMotor_t motor, uint32_t angle);
-extern HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle);
 extern HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode);
 extern HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode);
 extern HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state);
