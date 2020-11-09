@@ -47,4 +47,40 @@ To be written
 APIs
 ----
 
-To be written
+`void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3)`:
+
+Initialize the piezo driver. The three parameters contains configuration for each motors. Currenty
+the basically just serves for specifying the piezo table to be used.
+
+`HAL_StatusTypeDef piezoSetStepFrequency(piezoMotor_t motor, int32_t freq)`
+`HAL_StatusTypeDef piezoGetStepFrequency(piezoMotor_t motor, int32_t *pFreq)`
+
+Setter and getter for the *frequency* of the piezo microstep. It is basically proportional to the motor speed.
+It can be negative.
+
+`HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)`
+`HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode)`
+
+Setter and getter for the motor operating mode. It can be one of the following values:
+
+ - PIEZO_NORMAL: motor is running as per the *frequency* set by the user
+ - PIEZO_BRAKE: motor is in *brake* state. i.e. it tries to stay still as much as it can and to avoid any compliance
+ - PIEZO_FREEWHEELING: motor does not move by itself, but it's free to move.
+
+
+`HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)`
+
+Returns the current motor state. It's useful to check for overcurrent. The state can be one of the following values:
+
+ - STATE_NOT_INIT: piezo motor initialization has been not initiated/completed yet.
+ - STATE_STEADY: piezo motor is not running (i.e. in either PIEZO_BRAKE or PIEZO_FREEWHEELING state).
+ - STATE_OVERCURRENT: piezo motor in overcurrent state (i.e. protection engaged).
+ - STATE_RAMPING: piezo motor is performing a state transition i.e. from a mode to another one.
+ - STATE_NORMAL: piezo motor is in normal operation.
+
+`HAL_StatusTypeDef piezoOvercurrentClear(piezoMotor_t motor);`
+
+Clears the "overcurrent" protection state and re-enables the overcurrent protection.
+In case of a HW failure the protection will likely to immediately retrigger.
+This could be useful in case of a spurious overcurrent event (i.e. due to a too steep movement attempt).
+**NOTE**: the motor will restart from the last working state before overcurrent event happened.
