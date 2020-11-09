@@ -60,7 +60,7 @@ extern HAL_StatusTypeDef piezoSetStepAngle(piezoMotor_t motor, uint32_t angle);
 extern HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle);
 extern HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode);
 extern HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode);
-extern piezoMotorState_t piezoGetState(piezoMotor_t motor);
+extern HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state);
 
 #ifdef __cplusplus
   } /* extern "C" */

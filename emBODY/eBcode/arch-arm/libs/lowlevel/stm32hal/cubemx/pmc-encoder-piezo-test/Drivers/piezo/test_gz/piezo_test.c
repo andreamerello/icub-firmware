@@ -168,7 +168,7 @@ int piezo_test_check_state(int m, piezoMotorState_t expected, int timeout_ms)
 	timeout_ms /= 10;
 
 	do  {
-		state = piezoGetState(m);
+		piezoGetState(m, &state);
 		if (timeout_ms-- == 0)
 			break;
 		usleep(10000);

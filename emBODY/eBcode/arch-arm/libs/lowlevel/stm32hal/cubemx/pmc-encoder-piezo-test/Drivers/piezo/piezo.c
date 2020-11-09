@@ -591,15 +591,23 @@ HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode)
 /*******************************************************************************************************************//**
  * @brief   Select operation mode
  * @param   motor   Number of the motor
+ *          state pointer to a piezoMotorState_t variable to be loaded with the
+ *                motor state. Motor state could be one of the following values:
+ *                STATE_NORMAL       normal motor opration
+ *                STATE_STEADY       motor still (i.e. break or freewheel)
+ *			      STATE_NOT_INIT     motor driver not initialized
+ *			      STATE_OVERCURRENT  motor stopped due to overcurrent condition
  * @return  One of the following values:
- *          STATE_NORMAL       normal motor opration
- *          STATE_STEADY       motor still (i.e. break or freewheel)
- *			STATE_NOT_INIT     motor driver not initialized
- *			STATE_OVERCURRENT  motor stopped due to overcurrent condition
+ *          HAL_ERROR   arguments error
+ *          HAL_OK      operation terminated without errors
  */
-piezoMotorState_t piezoGetState(piezoMotor_t motor)
+HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)
 {
-	return ACCESS_ONCE(pStatusTable[motor]->state);
+    if ((motor < 0) || (motor > 3u))
+        return HAL_ERROR;
+
+    *state = ACCESS_ONCE(pStatusTable[motor]->state);
+    return HAL_OK;
 }
 
 /* END OF FILE ********************************************************************************************************/
