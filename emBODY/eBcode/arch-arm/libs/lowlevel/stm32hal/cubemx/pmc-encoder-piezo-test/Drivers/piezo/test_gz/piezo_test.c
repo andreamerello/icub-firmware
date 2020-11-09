@@ -283,6 +283,12 @@ int main()
 	piezo_test_check_state(0, STATE_OVERCURRENT, 0);
 	sleep(1);
 
+	/* test overcurrent recovery */
+	piezoOvercurrentClear(0);
+	piezo_test_check_state(0, STATE_NORMAL, 500);
+	piezoOvercurrentClear(1);
+	piezo_test_check_state(1, STATE_STEADY, 500);
+	sleep(1);
 	HAL_SPI_DMAStop(&hspi1);
 //	printf("count %d\n", dbg_count);
 }
