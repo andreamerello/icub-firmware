@@ -246,6 +246,9 @@ int main()
 	piezo_set_state_and_check(1, PIEZO_FREEWHEELING);
 	sleep(1);
 	piezo_set_state_and_check(0, PIEZO_NORMAL);
+	piezoSetStepFrequency(0, 100);
+	sleep(1);
+  	piezoSetStepFrequency(0, -100);
 	piezo_set_state_and_check(2, PIEZO_BRAKE);
 	sleep(1);
 
