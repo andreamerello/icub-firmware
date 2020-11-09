@@ -566,6 +566,15 @@ HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)
     return HAL_OK;
 }
 
+/*******************************************************************************************************************//**
+ * @brief   Select operation mode
+ * @param   motor   Number of the motor
+ * @return  One of the following values:
+ *          STATE_NORMAL       normal motor opration
+ *          STATE_STEADY       motor still (i.e. break or freewheel)
+ *			STATE_NOT_INIT     motor driver not initialized
+ *			STATE_OVERCURRENT  motor stopped due to overcurrent condition
+ */
 piezoMotorState_t piezoGetState(piezoMotor_t motor)
 {
 	return ACCESS_ONCE(pStatusTable[motor]->state);
