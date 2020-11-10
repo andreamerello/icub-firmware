@@ -15,7 +15,8 @@ int lr17_encoder_time;
 
 bool lr17_encoder_init()
 {
-	lr17_encoder_time = ...;
+#warning FIXME_dummy
+	lr17_encoder_time = 0;
 }
 
 bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
@@ -25,7 +26,8 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
     lr17_encoder_cb_arg = arg;
     lr17_encoder_cb = cb;
 
-    time = ...;
+#warning FIXME_dummy
+    time = 501;
 
     if ((lr17_encoder_time - time) > 500) {
         HAL_SPI_Receive_IT(&hspi4, lr17_encoder_buf.spi, 2);
@@ -37,7 +39,9 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
 
 void lr17_spi_cb(SPI_HandleTypeDef *spi)
 {
-    lr17_encoder_time = ...;
+#warning FIXME_dummy
+    lr17_encoder_time = 0;
+
     ACCESS_ONCE(lr17_encoder_val) =
         ACCESS_ONCE(lr17_encoder_buf.val) & 0x7fff;
     if (lr17_encoder_cb)
