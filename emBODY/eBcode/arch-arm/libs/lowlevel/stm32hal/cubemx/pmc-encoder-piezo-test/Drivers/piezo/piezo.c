@@ -42,12 +42,6 @@
 /* Motor max step freqency */
 #define PIEZO_MAXFREQ       3000
 
-/* Macros to control reentrancy */
-#define __PIEZO_ENTER_CRITICAL()    vPortEnterCritical()
-#define __PIEZO_EXIT_CRITICAL()     vPortExitCritical()
-//#define __PIEZO_ENTER_CRITICAL()    __HAL_DMA_DISABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT)
-//#define __PIEZO_EXIT_CRITICAL()     __HAL_DMA_ENABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT)
-
 /* Half round-angle */
 #define HALF_ROUND                  (0x80000000U)
 
