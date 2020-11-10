@@ -88,6 +88,7 @@ Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pcd_ex.c \
 Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_ll_usb.c \
 Drivers/piezo/piezo.c \
 Drivers/encoder/qe_encoder.c \
+Drivers/encoder/lr17_encoder.c \
 Drivers/gpl_utils.c \
 Src/system_stm32g4xx.c \
 Src/app_freertos.c \
