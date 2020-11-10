@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
-#include "gpl_utils.h"
+#include "../gpl_utils.h"
 #include "piezo.h"
 
 #if (USE_HAL_COMP_REGISTER_CALLBACKS != 1)
