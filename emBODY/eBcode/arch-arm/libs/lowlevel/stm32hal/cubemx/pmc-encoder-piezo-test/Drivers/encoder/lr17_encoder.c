@@ -4,7 +4,11 @@ void(*lr17_encoder_cb)(void *arg) = NULL;
 void *lr17_encoder_cb_arg;
 
 int lr17_encoder_val = 0;
-uint16_t lr17_encoder_buf;
+
+union {
+    uint8_t spi[2];
+    uint16_t val;
+} lr17_encoder_buf;
 
 int lr17_encoder_time;
 
@@ -23,18 +27,19 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
 
     time = ...;
 
-    if ((lr17_encoder_time - time) > 500uS) {
-        HAL_SPI_Receive_IT(&hspi4, &lr17_encoder_buf, 2));
+    if ((lr17_encoder_time - time) > 500) {
+        HAL_SPI_Receive_IT(&hspi4, lr17_encoder_buf.spi, 2);
         return true;
     } else {
         return false;
     }
 }
 
-void lr17_spi_cb(HALSPI spi)
+void lr17_spi_cb(SPI_HandleTypeDef *spi)
 {
     lr17_encoder_time = ...;
-    ACCESS_ONCE(lr17_encoder_val) = ACCESS_ONCE(lr17_encoder_buf) & 0x7fffffff;
+    ACCESS_ONCE(lr17_encoder_val) =
+        ACCESS_ONCE(lr17_encoder_buf.val) & 0x7fff;
     if (lr17_encoder_cb)
         lr17_encoder_cb(lr17_encoder_cb_arg);
 }
