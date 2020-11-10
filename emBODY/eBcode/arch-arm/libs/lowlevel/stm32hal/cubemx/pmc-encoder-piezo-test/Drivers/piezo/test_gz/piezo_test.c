@@ -103,8 +103,6 @@ void *dma_worker(void *arg)
 //		if (!err)
 //			printf("OK\n");
 
-			dac[id] = (dac[id] + 1) % 4;
-
 			fprintf(f[id], "%u", DAC_DECODE_VAL(out));
 			if (dac[id] == 3)
 				fprintf(f[id], "\n");
@@ -114,6 +112,7 @@ void *dma_worker(void *arg)
 //		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
 //		       DAC_LDAC(out) ? "LDAC" : "");
 
+			dac[id] = (dac[id] + 1) % 4;
 		}
 	}
 	for (id = 0; id < 3; id++)
