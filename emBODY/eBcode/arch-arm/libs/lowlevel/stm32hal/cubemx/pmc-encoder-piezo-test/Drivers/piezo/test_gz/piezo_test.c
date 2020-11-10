@@ -108,9 +108,9 @@ void *dma_worker(void *arg)
 				fprintf(f[id], "\n");
 			else
 				fprintf(f[id], ", ");
-//		printf("0x%08x - %d %d %s\n", out,
-//		       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
-//		       DAC_LDAC(out) ? "LDAC" : "");
+//			printf("ID:%d - 0x%08x - %d %d %s\n", id, out,
+//			       DAC_DECODE_ADR(out), DAC_DECODE_VAL(out),
+//			       DAC_LDAC(out) ? "LDAC" : "");
 
 			dac[id] = (dac[id] + 1) % 4;
 		}
