@@ -27,10 +27,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdlib.h> /* abs() */
+#include <stdio.h>
 #include "../Drivers/piezo/piezo.h"
 #include "../Drivers/piezo/tables/generated/delta_8192_table.c"
 #include "../Drivers/piezo/tables/generated/delta_1024_table.c"
 #include "../Drivers/piezo/tables/generated/rhomb_8192_table.c"
+#include "../Drivers/encoder/qe_encoder.h"
 
 /* USER CODE END Includes */
 
@@ -117,24 +119,34 @@ void MainTask(void *argument)
 {
     int i;
     piezoMotorCfg_t cfg1, cfg2, cfg3;
+    qe_encoder_cfg_t qe_cfg[2] = {
+        {.htim = &htim2},
+        {.htim = &htim5}
+    };
+    qe_encoder_t qe[2];
+    int qe_val[2];
+    int encoder_count = 0;
     uint32_t vel[3] = {0, 0, 0};
     uint32_t vel_max[3] = {1000, 1500, 2000};
     uint32_t delta[3] = {50, 50, 50};
 
     /* USER CODE BEGIN MainTask */
+    for (i = 0; i < 2; i++)
+             qe_encoder_init(&qe[i], &qe_cfg[i]);
+
     cfg1.phaseTable = delta_1024;
-	cfg2.phaseTable = delta_8192;
-	cfg3.phaseTable = rhomb_8192;
+    cfg2.phaseTable = delta_8192;
+    cfg3.phaseTable = rhomb_8192;
 
-	cfg1.phaseTableLen = 1024;
-	cfg2.phaseTableLen = 8192;
-	cfg3.phaseTableLen = 8192;
+    cfg1.phaseTableLen = 1024;
+    cfg2.phaseTableLen = 8192;
+    cfg3.phaseTableLen = 8192;
 
-	piezoInit(&cfg1, &cfg2, &cfg3);
+    piezoInit(&cfg1, &cfg2, &cfg3);
 
     vel[0] = 0;
   /* Infinite loop */
-	while (1) {
+    while (1) {
         for (i = 0; i < 3; i++) {
             piezoSetStepFrequency(i, vel[i]);
             vel[i] += delta[i];
@@ -144,6 +156,13 @@ void MainTask(void *argument)
             }
         }
         osDelay(100);
+        if (!encoder_count--) {
+            encoder_count = 10;
+            for (i = 0; i < 2; i++)
+                     qe_encoder_get(&qe[i], &qe_val[i]);
+            printf("encoders: QE1: %d, QE2: %d, ABS: %d\n",
+                   qe_val[0], qe_val[1], 0);
+        }
   }
   /* USER CODE END MainTask */
 }
