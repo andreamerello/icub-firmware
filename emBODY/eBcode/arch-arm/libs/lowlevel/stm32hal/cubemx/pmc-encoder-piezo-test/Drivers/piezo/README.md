@@ -38,6 +38,12 @@ The test programs can perform two checks:
 
 - it generates CVS files from the DMA data, that can be visually analyzed. From within the "test_gz" directory, the script [plot.sh](./plot.sh) can be invoked.
 
+ARM demo
+--------
+
+The driver (i.e. the driver's directory) is stored inside the tree of an ARM demo program (generated with CubeMX).
+The demo application tries to move three motors independently (and it tries to read the encoders). Note that this is Currently **completely untested** (however it compiles..).
+
 configuration #defines
 ----------------------
 
