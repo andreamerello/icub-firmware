@@ -106,18 +106,18 @@ Waveform examples
 These waveforms have been generated with the testbench
 
 Delta (8192 samples table) waveform example. Acceleration changing frequency from 5 to 200.
-![delta][./pics/delta8192.png]
+![delta](./pics/delta8192.png)
 
 
 Detail of two delta waveforms with 8192 and 1024 samples table. Acceleration changing frequency from 5 to 200.
-![delta][./pics/delta8192.png]
-![delta][./pics/delta1024.png]
+![delta](./pics/delta8192.png)
+![delta](./pics/delta1024.png)
 
 Detail of ramp on RUN->BREAK condition (delta waveform)
-![delta][./pics/ramp.png]
+![delta](./pics/ramp.png)
 
 Detail of ramp on FREEWHEEL->RUN condition (delta waveform)
-![delta][./pics/ramp2.png]
+![delta](./pics/ramp2.png)
 
 Rhomb (8192 samples table) waveform example
-![delta][./pics/rhomb.png]
+![delta](./pics/rhomb.png)
