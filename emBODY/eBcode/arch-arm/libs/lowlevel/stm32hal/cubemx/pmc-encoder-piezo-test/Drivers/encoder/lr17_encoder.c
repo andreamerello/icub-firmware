@@ -12,6 +12,9 @@ union {
 
 bool lr17_encoder_init()
 {
+    HAL_NVIC_SetPriority(SPI4_IRQn, 1, 1);
+    HAL_NVIC_EnableIRQ(SPI4_IRQn);
+
     return true;
 }
 
