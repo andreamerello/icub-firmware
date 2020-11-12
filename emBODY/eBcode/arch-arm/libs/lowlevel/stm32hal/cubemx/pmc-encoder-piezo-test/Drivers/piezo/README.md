@@ -110,8 +110,8 @@ Delta (8192 samples table) waveform example. Acceleration changing frequency fro
 
 
 Detail of two delta waveforms with 8192 and 1024 samples table. Acceleration changing frequency from 5 to 200.
-![delta](./pics/delta8192.png)
-![delta](./pics/delta1024.png)
+![delta](./pics/delta8192_det.png)
+![delta](./pics/delta1024_det.png)
 
 Detail of ramp on RUN->BREAK condition (delta waveform)
 ![delta](./pics/ramp.png)
