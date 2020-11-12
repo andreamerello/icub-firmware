@@ -3,14 +3,14 @@ PMC Piezo motor driver
 
 This is triple-motor driver for PMC piezo subsystem. This is *heavily* based on G.Z. original code - thanks Giorgio :).
 
-The PMC board has HW quirks that causes the three motors not to be independant. Initially I still thought a 1-motor driver could be written (and instantiated three times) but from time to time I changed my mind: it turned out that this si practically unfeasible; it's more than few SW hacks or quirks.
+The PMC board has HW quirks that causes the three motors not to be independent. Initially I still thought a 1-motor driver could be written (and instantiated three times) but from time to time I changed my mind: it turned out that this is practically unfeasible; it's more than few SW hacks or quirks.
 
 directory structure
 -------------------
 
-My 1st attempt is stored [here](./old). In this directoy there are also [my considerations](old/README.md) about this.
+My 1st attempt is stored [here](./old). In this directory there are also [my considerations](old/README.md) about this.
 
-The "real" pcm piezo driver is in the root directory, alongside this README, and it's basically [one single C file](./piezo_gz.c).
+The "real" PMC piezo driver is in the root directory, alongside this README, and it's basically [one single C file](./piezo_gz.c).
 
 The driver does not explicitly includes STM HAL headers files; rather it includes [hal.h](hal.h). This serves for testing purposes: when the driver is linked with the test program, instead of the real application, *hal.h* is somehow replaced with a test version that implements emulations/stubs for HAL APIs.
 
@@ -25,7 +25,7 @@ A [python script](./faulhaber_csv_to_c.py) has been used to generate C tables fr
 
 [This script](./gen/sh) is used to (re)-generate all the tables.
 
-Finally, the intermediate csv files could be plot running [plot.sh](./plot.sh). **NOTE**: you need a recent version of *gnuplot*
+Finally, the intermediate CVS files could be plot running [plot.sh](./plot.sh). **NOTE**: you need a recent version of *gnuplot*
 
 test bench
 ----------
@@ -36,25 +36,25 @@ The test programs can perform two checks:
 
 - it automatically checks for the correct data formation in the DMA buffers (i.e. DACs are addressed correctly, LDAC command is present in right places); in case of errors, prints are spit out.
 
-- it generates csv files from the DMA data, that can be visually analyzed. From within the "test_gz" directory, the scirpt [plot.sh](./plot.sh) can be invoked.
+- it generates CVS files from the DMA data, that can be visually analyzed. From within the "test_gz" directory, the script [plot.sh](./plot.sh) can be invoked.
 
 configuration #defines
 ----------------------
 
 There are some compile time defines. Some of them are probably part of magic recipes that no one really want to change. Some are just straightforward constants that have not to be changed. Few could be tweaked by the user.
 
-`#define QUADSAMPLES_BUFFER_LENGHT   (256)`
+`#define QUADSAMPLES_BUFFER_LENGTH   (256)`
 The higher the value, the fewer the interrupts, the less critical the timing, the higher the latency to respond to user commands (i.e. velocity changes).
 
 `#define PIEZO_RAMP_SAMPLES 10`
-Number of points the driver will insert when ramping currents up/down. This should be choosen so that a transition from *BRAKE* to *FREEWHEEL* does not cause a spurious overcurrent fault. It depends by the motor model (i.e. parastic capacitance); choose the greatest of the three.
+Number of points the driver will insert when ramping currents up/down. This should be chosen so that a transition from *BRAKE* to *FREEWHEEL* does not cause a spurious overcurrent fault. It depends by the motor model (i.e. parastic capacitance); choose the greatest of the three.
 
 APIs
 ----
 
 `void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3)`:
 
-Initialize the piezo driver. The three parameters contains configuration for each motors. Currenty
+Initialize the piezo driver. The three parameters contains configuration for each motors. Currently
 the basically just serves for specifying the piezo table to be used.
 
 `HAL_StatusTypeDef piezoSetStepFrequency(piezoMotor_t motor, int32_t freq)`
