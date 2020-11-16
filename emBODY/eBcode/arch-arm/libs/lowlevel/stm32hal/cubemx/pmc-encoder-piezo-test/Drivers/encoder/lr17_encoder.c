@@ -40,6 +40,17 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
 }
 
 /*******************************************************************************************************************//**
+ * @brief   This function returns the last value read from the encoder.
+ * @param   Pointer to a variable to be filled with the encoder value
+ * @return  true on succes, false otherwise
+ */
+bool lr17_encoder_get(int *angle)
+{
+    *angle = ACCESS_ONCE(lr17_encoder_val);
+    return true;
+}
+
+/*******************************************************************************************************************//**
  * @brief   Internal SPI callback for handling the SPI read completion
  * @param   spi the CubeMX SPI handle
  */
@@ -49,15 +60,4 @@ static void lr17_spi_cb(SPI_HandleTypeDef *spi)
         ACCESS_ONCE(lr17_encoder_buf.val) & 0x7fff;
     if (lr17_encoder_cb)
         lr17_encoder_cb(lr17_encoder_cb_arg);
-}
-
-/*******************************************************************************************************************//**
- * @brief   This function returns the last value read from the encoder.
- * @param   Pointer to a variable to be filled with the encoder value
- * @return  true on succes, false otherwise
- */
-bool lr17_encoder_get(int *angle)
-{
-    *angle = ACCESS_ONCE(lr17_encoder_val);
-    return true;
 }
