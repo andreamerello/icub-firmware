@@ -3,7 +3,7 @@
 bool qe_encoder_init(qe_encoder_t *e, qe_encoder_cfg_t *c)
 {
     e->cfg = *c;
-	HAL_TIM_Encoder_Start(e->cfg.htim, TIM_CHANNEL_ALL);
+    HAL_TIM_Encoder_Start(e->cfg.htim, TIM_CHANNEL_ALL);
 
     return true;
 }
