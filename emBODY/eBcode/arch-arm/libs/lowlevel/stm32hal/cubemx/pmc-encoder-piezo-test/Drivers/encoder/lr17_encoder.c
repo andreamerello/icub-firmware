@@ -10,6 +10,11 @@ union {
     uint16_t val;
 } lr17_encoder_buf;
 
+/*******************************************************************************************************************//**
+ * @brief   Initializes the LR17 encoder software driver.
+ *          This function assumes that the SPI peripheral has been already initialized with CubeMX functions.
+ * @return  true on succes, false otherwise
+ */
 bool lr17_encoder_init()
 {
     HAL_NVIC_SetPriority(SPI4_IRQn, 1, 1);
@@ -18,6 +23,13 @@ bool lr17_encoder_init()
     return true;
 }
 
+/*******************************************************************************************************************//**
+ * @brief   Starts an encoder value acquisition. The value could be retrieved later using lr17_encoder_get()
+ *          Optionally an user callback will be called when the new data is available
+ * @param   cb   an optional function pointer for the acquire-complete callback. Can be NULL
+ *          arg  an user argument to be passed to the acquire-complete callback.
+ * @return  true on succes, false otherwise
+ */
 bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
 {
     lr17_encoder_cb_arg = arg;
@@ -27,6 +39,10 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
     return true;
 }
 
+/*******************************************************************************************************************//**
+ * @brief   Internal SPI callback for handling the SPI read completion
+ * @param   spi the CubeMX SPI handle
+ */
 void lr17_spi_cb(SPI_HandleTypeDef *spi)
 {
     ACCESS_ONCE(lr17_encoder_val) =
@@ -35,6 +51,11 @@ void lr17_spi_cb(SPI_HandleTypeDef *spi)
         lr17_encoder_cb(lr17_encoder_cb_arg);
 }
 
+/*******************************************************************************************************************//**
+ * @brief   This function returns the last value read from the encoder.
+ * @param   Pointer to a variable to be filled with the encoder value
+ * @return  true on succes, false otherwise
+ */
 bool lr17_encoder_get(int *angle)
 {
     *angle = ACCESS_ONCE(lr17_encoder_val);
