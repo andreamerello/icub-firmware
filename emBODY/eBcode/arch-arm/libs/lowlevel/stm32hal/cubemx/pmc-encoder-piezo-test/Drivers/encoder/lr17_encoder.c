@@ -43,7 +43,7 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
  * @brief   Internal SPI callback for handling the SPI read completion
  * @param   spi the CubeMX SPI handle
  */
-void lr17_spi_cb(SPI_HandleTypeDef *spi)
+static void lr17_spi_cb(SPI_HandleTypeDef *spi)
 {
     ACCESS_ONCE(lr17_encoder_val) =
         ACCESS_ONCE(lr17_encoder_buf.val) & 0x7fff;
