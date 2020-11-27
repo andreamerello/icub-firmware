@@ -128,6 +128,7 @@ typedef struct {
     int dummy;
 } demo_cmd_t;
 
+uint32_t led_red[] = {LED_RED0, LED_RED1, LED_RED2};
 QueueHandle_t cmd_queue  = NULL ;
 void CmdTask(void *argument)
 {
@@ -227,8 +228,14 @@ void MainTask(void *argument)
         }
         osDelay(100);
 
-        for (i = 0; i < 3; i++)
+        for (i = 0; i < 3; i++) {
             piezoGetState(i, &state[i]);
+            if (state[i] == STATE_OVERCURRENT) {
+                LED_ON(LED_REDPORT, led_red[i]);
+            } else {
+                LED_OFF(LED_REDPORT, led_red[i]);
+            }
+        }
 
         if (ui_stat_counter == 1)
             lr17_encoder_acquire(NULL, NULL);
