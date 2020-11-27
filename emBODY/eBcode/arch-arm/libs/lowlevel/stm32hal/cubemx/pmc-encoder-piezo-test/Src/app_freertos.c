@@ -134,6 +134,7 @@ void MainTask(void *argument)
     int qe_val[2];
     int lr17_val;
     int encoder_count = 10;
+    piezoMotorState_t state[3];
     uint32_t vel[3] = {0, 0, 0};
     uint32_t vel_max[3] = {1000, 1500, 2000};
     uint32_t delta[3] = {50, 50, 50};
@@ -178,6 +179,9 @@ void MainTask(void *argument)
         }
         osDelay(100);
 
+        for (i = 0; i < 3; i++)
+            piezoGetState(i, &state[i]);
+
         if (encoder_count == 1)
             lr17_encoder_acquire(NULL, NULL);
         if (!encoder_count--) {
@@ -187,6 +191,11 @@ void MainTask(void *argument)
             lr17_encoder_get(&lr17_val);
             printf("encoders: QE1: %d, QE2: %d, ABS: %d\n",
                    qe_val[0], qe_val[1], lr17_val);
+
+            printf("protection: %d %d %d\n",
+                   state[0] == STATE_OVERCURRENT,
+                   state[1] == STATE_OVERCURRENT,
+                   state[2] == STATE_OVERCURRENT);
         }
   }
   /* USER CODE END MainTask */
