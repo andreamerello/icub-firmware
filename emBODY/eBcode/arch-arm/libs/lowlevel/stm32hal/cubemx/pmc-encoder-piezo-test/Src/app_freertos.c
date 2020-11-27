@@ -187,7 +187,7 @@ void MainTask(void *argument)
         if (!encoder_count--) {
             encoder_count = 10;
             for (i = 0; i < 2; i++)
-                     qe_encoder_get(&qe[i], &qe_val[i]);
+                qe_encoder_get(&qe[i], &qe_val[i]);
             lr17_encoder_get(&lr17_val);
             printf("encoders: QE1: %d, QE2: %d, ABS: %d\n",
                    qe_val[0], qe_val[1], lr17_val);
@@ -197,7 +197,7 @@ void MainTask(void *argument)
                    state[1] == STATE_OVERCURRENT,
                    state[2] == STATE_OVERCURRENT);
         }
-  }
+    }
   /* USER CODE END MainTask */
 }
 
