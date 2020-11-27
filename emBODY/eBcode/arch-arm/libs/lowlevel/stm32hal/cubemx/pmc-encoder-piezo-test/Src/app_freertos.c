@@ -138,6 +138,17 @@ void MainTask(void *argument)
     uint32_t vel_max[3] = {1000, 1500, 2000};
     uint32_t delta[3] = {50, 50, 50};
 
+    if (VCOM_OK != vcomInit()) {
+        while(1) {
+            LED_TOGGLE(LED_ORANGEPORT, LED_ORANGE0);
+            osDelay(50);
+        }
+    }
+
+    LED_ON(LED_ORANGEPORT, LED_ORANGE0);
+    //coGetChar();
+    vcomRxChar();
+    printf("Start\n");
 
     lr17_encoder_init();
 
