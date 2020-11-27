@@ -136,8 +136,8 @@ void MainTask(void *argument)
     int encoder_count = 10;
     piezoMotorState_t state[3];
     uint32_t vel[3] = {0, 0, 0};
-    uint32_t vel_max[3] = {1000, 1500, 2000};
-    uint32_t delta[3] = {50, 50, 50};
+    uint32_t vel_max[3] = {100, 150, 200};
+    uint32_t delta[3] = {10, 10, 10};
 
     if (VCOM_OK != vcomInit()) {
         while(1) {
