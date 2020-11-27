@@ -31,6 +31,7 @@
 #include "usbd_vcom.h"
 #include "console.h"
 #include "leds.h"
+#include "analog.h"
 #include "../Drivers/piezo/piezo.h"
 #include "../Drivers/piezo/tables/generated/delta_8192_table.c"
 #include "../Drivers/piezo/tables/generated/delta_1024_table.c"
@@ -151,6 +152,7 @@ void MainTask(void *argument)
     vcomRxChar();
     printf("Start\n");
 
+    analogInit();
     lr17_encoder_init();
 
     for (i = 0; i < 2; i++)
@@ -196,6 +198,10 @@ void MainTask(void *argument)
                    state[0] == STATE_OVERCURRENT,
                    state[1] == STATE_OVERCURRENT,
                    state[2] == STATE_OVERCURRENT);
+            printf("VREFINT = %5u mV, VIN = %5u mV, CIN = %5u mA, VPP = %5u mV, VCC = %5u mV\n",
+                     analogGetVref_mV(), analogGetVin_mV(),
+                     analogGetIin_mA(), analogGetVpp_mV(), analogGetVcc_mV());
+
         }
     }
   /* USER CODE END MainTask */
