@@ -32,6 +32,7 @@
 #include "console.h"
 #include "leds.h"
 #include "analog.h"
+#include "queue.h"
 #include "../Drivers/piezo/piezo.h"
 #include "../Drivers/piezo/tables/generated/delta_8192_table.c"
 #include "../Drivers/piezo/tables/generated/delta_1024_table.c"
@@ -121,10 +122,33 @@ void MX_FREERTOS_Init(void) {
   */
 
 #define printf coprintf
+#define UI_STAT_DOWNSAMPLING 5
+
+typedef struct {
+    int dummy;
+} demo_cmd_t;
+
+QueueHandle_t cmd_queue  = NULL ;
+void CmdTask(void *argument)
+{
+    char cobuf[64];
+    demo_cmd_t cmd;
+
+    while (1) {
+        coLockedEditString(portMAX_DELAY, cobuf, sizeof(cobuf));
+        coprintf("\r");
+        printf("\033[K");
+        xQueueSendToFront(cmd_queue, &cmd, 0);
+    }
+}
+
 /* USER CODE END Header_MainTask */
+
+
 void MainTask(void *argument)
 {
   /* USER CODE BEGIN MainTask */
+    demo_cmd_t cmd;
     int i;
     piezoMotorCfg_t cfg1, cfg2, cfg3;
     qe_encoder_cfg_t qe_cfg[2] = {
@@ -134,7 +158,7 @@ void MainTask(void *argument)
     qe_encoder_t qe[2];
     int qe_val[2];
     int lr17_val;
-    int encoder_count = 10;
+    int ui_stat_counter = UI_STAT_DOWNSAMPLING;
     piezoMotorState_t state[3];
     uint32_t vel[3] = {0, 0, 0};
     uint32_t vel_max[3] = {100, 150, 200};
@@ -150,6 +174,23 @@ void MainTask(void *argument)
     LED_ON(LED_ORANGEPORT, LED_ORANGE0);
     //coGetChar();
     vcomRxChar();
+    cmd_queue = xQueueCreate(1, sizeof(demo_cmd_t));
+    if (NULL == cmd_queue) {
+        while(1) {
+            LED_TOGGLE(LED_ORANGEPORT, LED_ORANGE0);
+            osDelay(100);
+        }
+    }
+
+    if (pdPASS != xTaskCreate(CmdTask, "CmdTask",
+                              configMINIMAL_STACK_SIZE, NULL,
+                              osPriorityNormal, NULL)) {
+        while(1) {
+            LED_TOGGLE(LED_ORANGEPORT, LED_ORANGE0);
+            osDelay(1000);
+        }
+    }
+
     printf("Start\n");
 
     analogInit();
@@ -169,8 +210,13 @@ void MainTask(void *argument)
     piezoInit(&cfg1, &cfg2, &cfg3);
 
     vel[0] = 0;
-  /* Infinite loop */
+
     while (1) {
+
+        if (pdPASS == xQueueReceive(cmd_queue, &cmd, 0)) {
+            //command
+        }
+
         for (i = 0; i < 3; i++) {
             piezoSetStepFrequency(i, vel[i]);
             vel[i] += delta[i];
@@ -184,13 +230,15 @@ void MainTask(void *argument)
         for (i = 0; i < 3; i++)
             piezoGetState(i, &state[i]);
 
-        if (encoder_count == 1)
+        if (ui_stat_counter == 1)
             lr17_encoder_acquire(NULL, NULL);
-        if (!encoder_count--) {
-            encoder_count = 10;
+        if (!ui_stat_counter--) {
+            ui_stat_counter = UI_STAT_DOWNSAMPLING;
             for (i = 0; i < 2; i++)
                 qe_encoder_get(&qe[i], &qe_val[i]);
             lr17_encoder_get(&lr17_val);
+            printf("\033[s");
+            printf("\033[5;0H");
             printf("encoders: QE1: %d, QE2: %d, ABS: %d\n",
                    qe_val[0], qe_val[1], lr17_val);
 
@@ -201,6 +249,7 @@ void MainTask(void *argument)
             printf("VREFINT = %5u mV, VIN = %5u mV, CIN = %5u mA, VPP = %5u mV, VCC = %5u mV\n",
                      analogGetVref_mV(), analogGetVin_mV(),
                      analogGetIin_mA(), analogGetVpp_mV(), analogGetVcc_mV());
+            printf("\033[u");
 
         }
     }
