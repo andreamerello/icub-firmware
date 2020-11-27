@@ -28,6 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include <stdlib.h> /* abs() */
 #include <stdio.h>
+#include "usbd_vcom.h"
+#include "console.h"
+#include "leds.h"
 #include "../Drivers/piezo/piezo.h"
 #include "../Drivers/piezo/tables/generated/delta_8192_table.c"
 #include "../Drivers/piezo/tables/generated/delta_1024_table.c"
@@ -115,6 +118,8 @@ void MX_FREERTOS_Init(void) {
   * @param  argument: Not used
   * @retval None
   */
+
+#define printf coprintf
 /* USER CODE END Header_MainTask */
 void MainTask(void *argument)
 {
@@ -128,7 +133,7 @@ void MainTask(void *argument)
     qe_encoder_t qe[2];
     int qe_val[2];
     int lr17_val;
-    int encoder_count = 0;
+    int encoder_count = 10;
     uint32_t vel[3] = {0, 0, 0};
     uint32_t vel_max[3] = {1000, 1500, 2000};
     uint32_t delta[3] = {50, 50, 50};
