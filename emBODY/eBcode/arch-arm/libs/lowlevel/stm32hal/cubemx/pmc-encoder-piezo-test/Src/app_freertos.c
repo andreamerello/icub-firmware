@@ -33,6 +33,7 @@
 #include "leds.h"
 #include "analog.h"
 #include "queue.h"
+#include "utilities.h"
 #include "../Drivers/piezo/piezo.h"
 #include "../Drivers/piezo/tables/generated/delta_8192_table.c"
 #include "../Drivers/piezo/tables/generated/delta_1024_table.c"
@@ -125,7 +126,17 @@ void MX_FREERTOS_Init(void) {
 #define UI_STAT_DOWNSAMPLING 5
 
 typedef struct {
-    int dummy;
+    int ival;
+    int mot;
+    enum {
+        ACT_GO,
+        ACT_FREE,
+        ACT_BRAKE,
+        ACT_MAX,
+        ACT_MIN,
+        ACT_STEP,
+        ACT_RECOVER,
+    } action;
 } demo_cmd_t;
 
 uint32_t led_red[] = {LED_RED0, LED_RED1, LED_RED2};
@@ -133,12 +144,59 @@ QueueHandle_t cmd_queue  = NULL ;
 void CmdTask(void *argument)
 {
     char cobuf[64];
+    const char *coptr;
+    char ch;
     demo_cmd_t cmd;
+    long tmpsl;
 
     while (1) {
         coLockedEditString(portMAX_DELAY, cobuf, sizeof(cobuf));
         coprintf("\r");
         printf("\033[K");
+        coptr = cobuf;
+
+        if (!atosl(&coptr, &tmpsl) || (tmpsl > 3))
+            continue;
+        ch = toupper(skipblank(&coptr));
+        coptr++;
+        cmd.mot = tmpsl;
+        switch ((int)ch) {
+        case 'G':
+            cmd.action = ACT_GO;
+            break;
+        case 'F':
+            cmd.action = ACT_FREE;
+            break;
+        case 'B':
+            cmd.action = ACT_BRAKE;
+            break;
+        case 'X':
+            cmd.action = ACT_MAX;
+            if (!atosl(&coptr, &tmpsl) || (tmpsl > 1000))
+                continue;
+            cmd.ival = tmpsl;
+            break;
+        case 'N':
+            cmd.action = ACT_MIN;
+            if (!atosl(&coptr, &tmpsl) || (tmpsl > 1000)) {
+                continue;
+            }
+            cmd.ival = tmpsl;
+            break;
+        case 'S':
+            cmd.action = ACT_STEP;
+            if (!atosl(&coptr, &tmpsl) || (tmpsl > 100))
+                continue;
+            cmd.ival = tmpsl;
+            break;
+        case 'R':
+            cmd.action = ACT_RECOVER;
+            break;
+
+        default:
+            continue;
+        }
+
         xQueueSendToFront(cmd_queue, &cmd, 0);
     }
 }
@@ -161,9 +219,10 @@ void MainTask(void *argument)
     int lr17_val;
     int ui_stat_counter = UI_STAT_DOWNSAMPLING;
     piezoMotorState_t state[3];
-    uint32_t vel[3] = {0, 0, 0};
-    uint32_t vel_max[3] = {100, 150, 200};
-    uint32_t delta[3] = {10, 10, 10};
+    int vel[3] = {0, 0, 0};
+    int vel_min[3] = {0, 0, 0};
+    int vel_max[3] = {100, 150, 200};
+    int delta[3] = {10, 10, 10};
 
     if (VCOM_OK != vcomInit()) {
         while(1) {
@@ -213,17 +272,44 @@ void MainTask(void *argument)
     vel[0] = 0;
 
     while (1) {
-
         if (pdPASS == xQueueReceive(cmd_queue, &cmd, 0)) {
-            //command
+            switch (cmd.action) {
+            case ACT_RECOVER:
+                piezoOvercurrentClear(cmd.mot);
+                break;
+            case ACT_GO:
+                piezoSetMode(cmd.mot, PIEZO_NORMAL);
+                break;
+            case ACT_FREE:
+                piezoSetMode(cmd.mot, PIEZO_FREEWHEELING);
+                break;
+            case ACT_BRAKE:
+                piezoSetMode(cmd.mot, PIEZO_BRAKE);
+                break;
+            case ACT_MAX:
+                vel_max[cmd.mot] = cmd.ival;
+                break;
+            case ACT_MIN:
+                vel_min[cmd.mot] = cmd.ival;
+                break;
+            case ACT_STEP:
+                delta[cmd.mot] = cmd.ival;
+                break;
+            break;
+            }
         }
 
         for (i = 0; i < 3; i++) {
             piezoSetStepFrequency(i, vel[i]);
             vel[i] += delta[i];
-            if (abs(vel[i]) > vel_max[i]) {
-                vel[i] = (vel[i] > 0) ? vel_max[i] : -vel_max[i];
-                delta[i] = -delta[i];
+            if (vel[i] > vel_max[i]) {
+                vel[i] = vel_max[i];
+                delta[i] = -abs(delta[i]);
+            }
+
+            if (vel[i] < vel_min[i]) {
+                vel[i] = vel_min[i];
+                delta[i] = abs(delta[i]);
             }
         }
         osDelay(100);
