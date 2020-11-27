@@ -75,6 +75,7 @@ void DMA2_Channel3_IRQHandler(void);
 void DMA2_Channel4_IRQHandler(void);
 void COMP1_2_3_IRQHandler(void);
 void I2C4_ER_IRQHandler(void);
+void SPI4_IRQHandler(void);
 void I2C3_ER_IRQHandler(void);
 void DMA1_Channel8_IRQHandler(void);
 /* USER CODE BEGIN EFP */

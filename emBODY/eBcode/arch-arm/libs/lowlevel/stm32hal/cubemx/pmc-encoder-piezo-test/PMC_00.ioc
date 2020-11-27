@@ -660,6 +660,7 @@ RCC.SYSCLKSource=RCC_SYSCLKSOURCE_PLLCLK
 Dma.ADC1.11.MemInc=DMA_MINC_ENABLE
 Dma.I2C2_TX.6.EventEnable=DISABLE
 Dma.I2C4_TX.10.Priority=DMA_PRIORITY_LOW
+NVIC.SPI4_IRQn=true\:0\:0\:false\:false\:true\:false\:true\:true
 PD15.GPIOParameters=GPIO_Label
 Dma.SPI3_TX.2.SyncRequestNumber=1
 NVIC.TIM5_IRQn=true\:5\:0\:false\:false\:true\:false\:true\:true

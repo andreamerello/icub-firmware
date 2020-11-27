@@ -10,6 +10,8 @@ union {
     uint16_t val;
 } lr17_encoder_buf;
 
+static void lr17_spi_cb(SPI_HandleTypeDef *spi);
+
 /*******************************************************************************************************************//**
  * @brief   Initializes the LR17 encoder software driver.
  *          This function assumes that the SPI peripheral has been already initialized with CubeMX functions.
@@ -17,8 +19,7 @@ union {
  */
 bool lr17_encoder_init()
 {
-    HAL_NVIC_SetPriority(SPI4_IRQn, 1, 1);
-    HAL_NVIC_EnableIRQ(SPI4_IRQn);
+    HAL_SPI_RegisterCallback(&hspi4, HAL_SPI_RX_COMPLETE_CB_ID, lr17_spi_cb);
 
     return true;
 }
