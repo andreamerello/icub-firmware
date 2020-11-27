@@ -118,6 +118,7 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_MainTask */
 void MainTask(void *argument)
 {
+  /* USER CODE BEGIN MainTask */
     int i;
     piezoMotorCfg_t cfg1, cfg2, cfg3;
     qe_encoder_cfg_t qe_cfg[2] = {
@@ -132,7 +133,6 @@ void MainTask(void *argument)
     uint32_t vel_max[3] = {1000, 1500, 2000};
     uint32_t delta[3] = {50, 50, 50};
 
-    /* USER CODE BEGIN MainTask */
 
     lr17_encoder_init();
 
