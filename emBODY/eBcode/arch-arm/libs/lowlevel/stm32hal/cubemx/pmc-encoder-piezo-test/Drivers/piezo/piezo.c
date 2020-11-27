@@ -552,7 +552,7 @@ HAL_StatusTypeDef piezoGetStepAngle(piezoMotor_t motor, int32_t *pAngle)
  */
 HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)
 {
-    if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
+    if ((motor < 0) || (motor > 2u) || (piezoFreqConst == 0))
         return HAL_ERROR;
 
     pStatusTable[motor]->phaseCntrl = mode;
@@ -574,7 +574,7 @@ HAL_StatusTypeDef piezoSetMode(piezoMotor_t motor, piezoMode_t mode)
  */
 HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode)
 {
-    if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
+    if ((motor < 0) || (motor > 2u) || (piezoFreqConst == 0))
         return HAL_ERROR;
 
     *mode = pStatusTable[motor]->phaseCntrl;
@@ -596,7 +596,7 @@ HAL_StatusTypeDef piezoGetMode(piezoMotor_t motor, piezoMode_t *mode)
  */
 HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)
 {
-    if ((motor < 0) || (motor > 3u))
+    if ((motor < 0) || (motor > 2u))
         return HAL_ERROR;
 
     *state = ACCESS_ONCE(pStatusTable[motor]->state);
@@ -612,7 +612,7 @@ HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)
  */
 HAL_StatusTypeDef piezoOvercurrentClear(piezoMotor_t motor)
 {
-    if ((motor < 0) || (motor > 3u) || (piezoFreqConst == 0))
+    if ((motor < 0) || (motor > 2u) || (piezoFreqConst == 0))
         return HAL_ERROR;
 
     if (!ACCESS_ONCE(pStatusTable[motor]->overcurrent))
