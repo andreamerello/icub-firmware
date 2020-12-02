@@ -14,6 +14,7 @@
 #include "../gpl_utils.h"
 #include "piezo.h"
 #include "leds.h"
+#include "cmsis_os.h"
 
 #if (USE_HAL_COMP_REGISTER_CALLBACKS != 1)
     #error Flag COMP in menu "Project Manager -> Advanced Settings -> Register CallBack" in CubeMx must be ENABLED
@@ -447,6 +448,7 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 
     /* Enable HV generator */
     piezoHighVoltage(ENABLE);
+    osDelay(20U);
 
     /* Clear DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
