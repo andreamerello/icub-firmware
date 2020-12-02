@@ -23,8 +23,8 @@ tmux send-keys -t "$pane_gdb" " " Enter
 tmux send-keys -t "$pane_gdb" "target remote localhost:3333" Enter
 
 # configure dashboard
-tmux send-keys -t "$pane_gdb" "db threads" Enter
-tmux send-keys -t "$pane_gdb" "db assembly" Enter
+tmux send-keys -t "$pane_gdb" "dashboard threads" Enter
+tmux send-keys -t "$pane_gdb" "dashboard assembly" Enter
 
 # source FreeRTOS awareness
 #tmux send-keys -t "$pane_gdb" "source ~/FreeRTOS-GDB/src/FreeRTOS.py" Enter
@@ -41,7 +41,7 @@ pts=`tmux capture-pane -t "$pane_db" -p |grep pts`
 tmux send-keys -t "$pane_db" C-l
 
 # set dashboard output to the 2nd pane
-tmux send-keys -t "$pane_gdb" "db -output $pts" Enter
+tmux send-keys -t "$pane_gdb" "dashboard -output $pts" Enter
 
 # clear screen
 tmux send-keys -t "$pane_gdb" C-l
