@@ -75,13 +75,17 @@ typedef struct __attribute__((packed))
     uint32_t dac[4];
 } QuadSample_t;
 
+QuadSample_t dmaBuffer1[QUADSAMPLES_BUFFER_LENGHT]  __attribute__ ((aligned(4)));
+QuadSample_t dmaBuffer2[QUADSAMPLES_BUFFER_LENGHT]  __attribute__ ((aligned(4)));
+QuadSample_t dmaBuffer3[QUADSAMPLES_BUFFER_LENGHT]  __attribute__ ((aligned(4)));
+
 typedef struct
 {
+    QuadSample_t *dmaBuffer;
     volatile int32_t phaseAngle;
     volatile int32_t phaseDelta;
     volatile piezoMode_t phaseCntrl;
     volatile bool overcurrent;
-    QuadSample_t dmaBuffer[QUADSAMPLES_BUFFER_LENGHT];
     int shift;
     uint32_t mask;
     piezoMotorCfg_t cfg;
@@ -400,6 +404,9 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     pStatusTable[1]->cfg = *cfgM2;
     pStatusTable[2]->cfg = *cfgM3;
 
+    pStatusTable[0]->dmaBuffer = dmaBuffer1;
+    pStatusTable[1]->dmaBuffer = dmaBuffer2;
+    pStatusTable[2]->dmaBuffer = dmaBuffer3;
     /* Constant to compute the step angle:
      * 2            PCLK2 prescaler
      * 4            number of DAC words per sample
@@ -448,16 +455,14 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
 
-    /* Start DMA for SPI 3 */
+
     SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */
-    HAL_SPI_Transmit_DMA(&hspi3,(void *)&(piezoMotor3.dmaBuffer), sizeof(piezoMotor3.dmaBuffer)/sizeof(uint16_t));
-
-    /* Start DMA for SPI 2 */
     SPI_1LINE_TX(&hspi2);   /* This must be always done in slave mode */
-    HAL_SPI_Transmit_DMA(&hspi2,(void *)&(piezoMotor2.dmaBuffer), sizeof(piezoMotor2.dmaBuffer)/sizeof(uint16_t));
 
+    HAL_SPI_Transmit_DMA(&hspi3,(void *)(dmaBuffer3), sizeof(dmaBuffer3)/sizeof(uint16_t));
+    HAL_SPI_Transmit_DMA(&hspi2,(void *)(dmaBuffer2), sizeof(dmaBuffer2)/sizeof(uint16_t));
     /* Start DMA for SPI 1 (this must be the last operation) */
-    HAL_SPI_Transmit_DMA(&hspi1,(void *)&(piezoMotor1.dmaBuffer), sizeof(piezoMotor1.dmaBuffer)/sizeof(uint16_t));
+    HAL_SPI_Transmit_DMA(&hspi1,(void *)(dmaBuffer1), sizeof(dmaBuffer1)/sizeof(uint16_t));
 }
 
 /*******************************************************************************************************************//**
