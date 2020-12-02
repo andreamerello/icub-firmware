@@ -55,7 +55,7 @@
 #define UPPER_HALF_INDEX            (QUADSAMPLES_BUFFER_LENGHT/2)
 
 /* number of samples to perform DAC transitions when changing state */
-#define PIEZO_RAMP_SAMPLES 100
+#define PIEZO_RAMP_SAMPLES 200
 
 
 /* Macro to set the value to be sent to a DAC */
