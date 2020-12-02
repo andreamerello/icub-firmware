@@ -13,6 +13,7 @@
 #include <string.h>
 #include "../gpl_utils.h"
 #include "piezo.h"
+#include "leds.h"
 
 #if (USE_HAL_COMP_REGISTER_CALLBACKS != 1)
     #error Flag COMP in menu "Project Manager -> Advanced Settings -> Register CallBack" in CubeMx must be ENABLED
@@ -283,14 +284,18 @@ static void piezoHighVoltage(FunctionalState enable)
 static void piezoDMA_ISR_HT(SPI_HandleTypeDef *hspi)
 {
     UNUSED(hspi);
-    //LED_ON(LED_GREENPORT, LED_GREEN0);  // DEBUG ONLY
+#ifdef DEBUG_DMA_TIMING
+    LED_ON(LED_GREENPORT, LED_GREEN0);
+#endif
     /* Update the first half of the buffer for the QUAD_DAC of motor #1 */
     piezoLoadBuffer(&piezoMotor1, LOWER_HALF_INDEX);
     /* Update the first half of the buffer for the QUAD_DAC of motor #2 */
     piezoLoadBuffer(&piezoMotor2, LOWER_HALF_INDEX);
     /* Update the first half of the buffer for the QUAD_DAC of motor #3 */
     piezoLoadBuffer(&piezoMotor3, LOWER_HALF_INDEX);
-    //LED_OFF(LED_GREENPORT, LED_GREEN1);  // DEBUG ONLY
+#ifdef DEBUG_DMA_TIMING
+    LED_OFF(LED_GREENPORT, LED_GREEN0);
+#endif
 }
 
 
@@ -305,14 +310,18 @@ static void piezoDMA_ISR_HT(SPI_HandleTypeDef *hspi)
 static void piezoDMA_ISR_TC(SPI_HandleTypeDef *hspi)
 {
     UNUSED(hspi);
-    //LED_ON(LED_GREENPORT, LED_GREEN1);  // DEBUG ONLY
+#ifdef DEBUG_DMA_TIMING
+    LED_ON(LED_GREENPORT, LED_GREEN0);
+#endif
     /* Update the second half of the buffer for the QUAD_DAC of motor #1 */
     piezoLoadBuffer(&piezoMotor1, UPPER_HALF_INDEX);
     /* Update the second half of the buffer for the QUAD_DAC of motor #2 */
     piezoLoadBuffer(&piezoMotor2, UPPER_HALF_INDEX);
     /* Update the second half of the buffer for the QUAD_DAC of motor #3 */
     piezoLoadBuffer(&piezoMotor3, UPPER_HALF_INDEX);
-    //LED_OFF(LED_GREENPORT, LED_GREEN0);  // DEBUG ONLY
+#ifdef DEBUG_DMA_TIMING
+    LED_OFF(LED_GREENPORT, LED_GREEN0);
+#endif
 }
 
 
