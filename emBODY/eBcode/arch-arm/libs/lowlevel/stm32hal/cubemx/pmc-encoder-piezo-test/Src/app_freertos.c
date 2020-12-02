@@ -232,7 +232,7 @@ void MainTask(void *argument)
     }
 
     LED_ON(LED_ORANGEPORT, LED_ORANGE0);
-    //coGetChar();
+
     vcomRxChar();
     cmd_queue = xQueueCreate(1, sizeof(demo_cmd_t));
     if (NULL == cmd_queue) {
