@@ -69,6 +69,9 @@
 #define DACCMD_SETLDAC 0x2
 #define DACCH_ALL 0x7
 
+/* uint32_t reset_cmd = SETDACVALUE(DACCMD_RESET, DACCH_ALL, 1); */
+uint32_t clr_cmd = SETDACVALUE(DACCMD_SETLDAC, DACCH_ALL, 0);
+uint32_t dbg_cmd = SETDACVALUE(DACCMD_SETLDAC, DACCH_ALL, 2000);
 uint32_t dummy_cmd = 0x0;
 /* Private typedef ****************************************************************************************************/
 
@@ -381,10 +384,62 @@ static void piezoCOMP_ISR_Trigger3(COMP_HandleTypeDef *hcomp)
     HAL_COMP_Stop(hcomp);
     /* Activate the motor BRAKE */
     pStatusTable[PIEZO_MOTOR3]->overcurrent = true;
+
     /* Error code */
     //LED_CODE(LED_REDPORT, LED_REDMASK, 4);
 }
 
+#ifdef DEBUG_SPI
+#include "console.h"
+void restore_hack()
+{
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    if (!coRxReady())
+        return;
+    coGetChar();
+
+#if 1
+    HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
+    osDelay(5);
+    coprintf("reset : %d\n",HAL_GPIO_ReadPin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin));
+
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    osDelay(10);
+
+    /* Enable DAC sync circuit */
+    HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
+    osDelay(5);
+    coprintf("set : %d\n",HAL_GPIO_ReadPin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin));
+
+#endif
+
+#if 0
+    coprintf("toggling NSEL\n");
+    HAL_GPIO_WritePin(GPIOA, DAC1_NSEL_Pin, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = DAC1_NSEL_Pin;
+    GPIO_InitStruct.Mode =  GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    osDelay(1);
+    HAL_GPIO_WritePin(GPIOA, DAC1_NSEL_Pin, GPIO_PIN_RESET);
+    osDelay(1);
+    HAL_GPIO_WritePin(GPIOA, DAC1_NSEL_Pin, GPIO_PIN_SET);
+    osDelay(1);
+
+    GPIO_InitStruct.Pin = DAC1_NSEL_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+#endif
+}
+#endif
 
 /* Exported functions *************************************************************************************************/
 
@@ -467,6 +522,26 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
     osDelay(5);
+
+#ifdef DEBUG_SPI
+    while(1) {
+
+        restore_hack();
+        for (i = 0; i < 4; i++) {
+
+            HAL_SPI_Transmit_IT(&hspi3, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
+            HAL_SPI_Transmit_IT(&hspi2, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
+            HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+
+            osDelay(10);
+
+            HAL_SPI_Transmit_IT(&hspi3, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
+            HAL_SPI_Transmit_IT(&hspi2, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
+            HAL_SPI_Transmit(&hspi1, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+            osDelay(10);
+        }
+    }
+#endif
 
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
     HAL_NVIC_DisableIRQ(SPI2_IRQn);

@@ -242,6 +242,7 @@ void MainTask(void *argument)
         }
     }
 
+#ifndef DEBUG_SPI
     if (pdPASS != xTaskCreate(CmdTask, "CmdTask",
                               configMINIMAL_STACK_SIZE, NULL,
                               osPriorityNormal, NULL)) {
@@ -250,7 +251,7 @@ void MainTask(void *argument)
             osDelay(1000);
         }
     }
-
+#endif
     printf("Start\n");
 
     analogInit();
