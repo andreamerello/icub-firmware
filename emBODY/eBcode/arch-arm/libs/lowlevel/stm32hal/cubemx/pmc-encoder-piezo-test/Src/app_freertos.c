@@ -221,7 +221,7 @@ void MainTask(void *argument)
     piezoMotorState_t state[3];
     int vel[3] = {0, 0, 0};
     int vel_min[3] = {0, 0, 0};
-    int vel_max[3] = {100, 150, 200};
+    int vel_max[3] = {100, 100, 100};
     int delta[3] = {10, 10, 10};
 
     if (VCOM_OK != vcomInit()) {
