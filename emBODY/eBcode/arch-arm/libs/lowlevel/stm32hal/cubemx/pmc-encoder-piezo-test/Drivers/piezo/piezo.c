@@ -69,6 +69,7 @@
 #define DACCMD_SETLDAC 0x2
 #define DACCH_ALL 0x7
 
+uint32_t dummy_cmd = 0x0;
 /* Private typedef ****************************************************************************************************/
 
 typedef struct __attribute__((packed))
@@ -450,11 +451,22 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     piezoHighVoltage(ENABLE);
     osDelay(20U);
 
-    /* Clear DAC sync circuit */
+    /* Clear DAC-sync FF; make sure all is properly aligned */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
-    HAL_Delay(5U);
+    osDelay(5);
+
+    /* push some data to wake up SPI2/3 */
+    HAL_SPI_Transmit_IT(&hspi3, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t));
+    HAL_SPI_Transmit_IT(&hspi2, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t));
+
+    /* force SPI1 TX in order to flush SPI2/SPI3 fifos */
+    for (i = 0; i < 4; i++)
+        HAL_SPI_Transmit(&hspi1, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    osDelay(10);
+
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
+    osDelay(5);
 
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
     HAL_NVIC_DisableIRQ(SPI2_IRQn);
