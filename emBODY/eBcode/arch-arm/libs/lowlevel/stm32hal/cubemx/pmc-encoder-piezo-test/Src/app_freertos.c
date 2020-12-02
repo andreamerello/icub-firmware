@@ -113,6 +113,10 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
 }
 
 /* USER CODE BEGIN Header_MainTask */
@@ -202,8 +206,6 @@ void CmdTask(void *argument)
 }
 
 /* USER CODE END Header_MainTask */
-
-
 void MainTask(void *argument)
 {
   /* USER CODE BEGIN MainTask */
