@@ -69,7 +69,7 @@
 #define DACCMD_SETLDAC 0x2
 #define DACCH_ALL 0x7
 
-/* uint32_t reset_cmd = SETDACVALUE(DACCMD_RESET, DACCH_ALL, 1); */
+uint32_t reset_cmd = SETDACVALUE(DACCMD_RESET, DACCH_ALL, 1);
 uint32_t clr_cmd = SETDACVALUE(DACCMD_SETLDAC, DACCH_ALL, 0);
 uint32_t dbg_cmd = SETDACVALUE(DACCMD_SETLDAC, DACCH_ALL, 2000);
 uint32_t dummy_cmd = 0x0;
@@ -538,6 +538,11 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
         }
     }
 #endif
+
+    HAL_SPI_Transmit_IT(&hspi3, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t));
+    HAL_SPI_Transmit_IT(&hspi2, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t));
+    HAL_SPI_Transmit(&hspi1, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    osDelay(2);
 
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
     HAL_NVIC_DisableIRQ(SPI2_IRQn);
