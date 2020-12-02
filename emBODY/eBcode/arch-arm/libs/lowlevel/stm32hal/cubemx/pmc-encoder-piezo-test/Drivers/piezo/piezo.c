@@ -552,6 +552,9 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     piezoHighVoltage(ENABLE);
     osDelay(20U);
 
+    for (i = 0; i < 3; i++)
+        piezoOvercurrentClear(i);
+
     SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */
     SPI_1LINE_TX(&hspi2);   /* This must be always done in slave mode */
 
