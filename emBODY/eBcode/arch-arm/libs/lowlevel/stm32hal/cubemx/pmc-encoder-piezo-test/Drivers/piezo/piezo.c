@@ -555,9 +555,6 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     for (i = 0; i < 3; i++)
         piezoOvercurrentClear(i);
 
-    SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */
-    SPI_1LINE_TX(&hspi2);   /* This must be always done in slave mode */
-
     HAL_SPI_Transmit_DMA(&hspi3,(void *)(dmaBuffer3), sizeof(dmaBuffer3)/sizeof(uint16_t));
     HAL_SPI_Transmit_DMA(&hspi2,(void *)(dmaBuffer2), sizeof(dmaBuffer2)/sizeof(uint16_t));
     /* Start DMA for SPI 1 (this must be the last operation) */
