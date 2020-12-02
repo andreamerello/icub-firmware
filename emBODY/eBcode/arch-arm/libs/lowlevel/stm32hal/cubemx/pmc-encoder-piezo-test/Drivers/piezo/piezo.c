@@ -456,6 +456,7 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 {
     int _shift;
     int i;
+    int spi_presc_reg, spi_presc;
 
     pStatusTable[0]->cfg = *cfgM1;
     pStatusTable[1]->cfg = *cfgM2;
@@ -464,14 +465,19 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     pStatusTable[0]->dmaBuffer = dmaBuffer1;
     pStatusTable[1]->dmaBuffer = dmaBuffer2;
     pStatusTable[2]->dmaBuffer = dmaBuffer3;
+    spi_presc_reg = (SPI1->CR1 & SPI_CR1_BR_Msk) >> SPI_CR1_BR_Pos;
+    spi_presc = 2;
+
+    for (i = 0; i < spi_presc_reg; i++)
+        spi_presc *= 2;
+
     /* Constant to compute the step angle:
-     * 2            PCLK2 prescaler
      * 4            number of DAC words per sample
      * 36           number of clock to be transmitted per word
      * 4294967296   Full round-angle (2**32)
      * For PCK2 frequency 21 MHz the constant is 58902. For 20 MHz is 61847
      */
-    piezoFreqConst = (2LL * 4LL * 36LL * 4294967296LL)/(int32_t)HAL_RCC_GetPCLK2Freq();
+    piezoFreqConst = (spi_presc * 4LL * 36LL * 4294967296LL)/(int32_t)HAL_RCC_GetPCLK2Freq();
 
     /* precalc shift & mask factors and clear/initialize variables */
     for (i = 0; i < ARRAY_SIZE(pStatusTable); i++) {
