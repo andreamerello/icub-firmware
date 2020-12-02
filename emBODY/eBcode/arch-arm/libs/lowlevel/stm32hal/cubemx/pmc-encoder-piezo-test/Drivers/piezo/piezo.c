@@ -63,6 +63,10 @@
 				  |(((uint32_t)(val)>>8)  & 0x000000FFUL) \
 				  |(((uint32_t)(val)<<24) & 0xFF000000UL))
 
+#define DACCMD_RESET 0x5
+#define DACCMD_SET 0x0
+#define DACCMD_SETLDAC 0x2
+#define DACCH_ALL 0x7
 
 /* Private typedef ****************************************************************************************************/
 
@@ -124,7 +128,7 @@ static inline void piezoLoadQSmp(QuadSample_t *pQSmp, uint32_t vals[4])
     uint32_t cmd;
 
     for (i = 0; i < 4; i++) {
-        cmd = (i == 3) ? 0x02 : 0x00;
+        cmd = (i == 3) ? DACCMD_SETLDAC : DACCMD_SET;
         ACCESS_ONCE(pQSmp->dac[i]) = SETDACVALUE(cmd, i, vals[i]);
     }
 }
