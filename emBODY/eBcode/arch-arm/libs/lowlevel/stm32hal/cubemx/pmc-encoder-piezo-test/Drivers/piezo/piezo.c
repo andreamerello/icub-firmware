@@ -502,10 +502,6 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_HALF_COMPLETE_CB_ID, piezoDMA_ISR_HT);
     HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_COMPLETE_CB_ID,      piezoDMA_ISR_TC);
 
-    /* Enable HV generator */
-    piezoHighVoltage(ENABLE);
-    osDelay(20U);
-
     /* Clear DAC-sync FF; make sure all is properly aligned */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
     osDelay(5);
@@ -546,6 +542,10 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
     HAL_NVIC_DisableIRQ(SPI2_IRQn);
     HAL_NVIC_DisableIRQ(SPI1_IRQn);
+
+    /* Enable HV generator */
+    piezoHighVoltage(ENABLE);
+    osDelay(20U);
 
     SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */
     SPI_1LINE_TX(&hspi2);   /* This must be always done in slave mode */
