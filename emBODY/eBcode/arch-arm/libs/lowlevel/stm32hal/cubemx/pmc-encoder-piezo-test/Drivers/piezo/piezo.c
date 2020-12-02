@@ -444,7 +444,6 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     /* Register CALLBACK functions for DMA SPI1 */
     HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_HALF_COMPLETE_CB_ID, piezoDMA_ISR_HT);
     HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_COMPLETE_CB_ID,      piezoDMA_ISR_TC);
-    __HAL_DMA_ENABLE_IT(hspi1.hdmatx, DMA_IT_TC|DMA_IT_HT);
 
     /* Enable HV generator */
     piezoHighVoltage(ENABLE);
