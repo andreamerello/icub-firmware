@@ -456,6 +456,9 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
 
+    HAL_NVIC_DisableIRQ(SPI3_IRQn);
+    HAL_NVIC_DisableIRQ(SPI2_IRQn);
+    HAL_NVIC_DisableIRQ(SPI1_IRQn);
 
     SPI_1LINE_TX(&hspi3);   /* This must be always done in slave mode */
     SPI_1LINE_TX(&hspi2);   /* This must be always done in slave mode */
