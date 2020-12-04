@@ -403,10 +403,10 @@ void restore_hack()
     osDelay(5);
     coprintf("reset : %d\n",HAL_GPIO_ReadPin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin));
 
-    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
-    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
-    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
-    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
     osDelay(10);
 
     /* Enable DAC sync circuit */
@@ -518,7 +518,7 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 
     /* force SPI1 TX in order to flush SPI2/SPI3 fifos */
     for (i = 0; i < 4; i++)
-        HAL_SPI_Transmit(&hspi1, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t), portMAX_DELAY);
+        HAL_SPI_Transmit(&hspi1, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t), 100);
     osDelay(10);
 
     /* Enable DAC sync circuit */
@@ -533,13 +533,13 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 
             HAL_SPI_Transmit_IT(&hspi3, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
             HAL_SPI_Transmit_IT(&hspi2, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
-            HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+            HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
 
             osDelay(10);
 
             HAL_SPI_Transmit_IT(&hspi3, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
             HAL_SPI_Transmit_IT(&hspi2, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
-            HAL_SPI_Transmit(&hspi1, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t), portMAX_DELAY);
+            HAL_SPI_Transmit(&hspi1, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
             osDelay(10);
         }
     }
@@ -547,7 +547,7 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 
     HAL_SPI_Transmit_IT(&hspi3, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t));
     HAL_SPI_Transmit_IT(&hspi2, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t));
-    HAL_SPI_Transmit(&hspi1, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t), portMAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t), 100);
     osDelay(2);
 
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
