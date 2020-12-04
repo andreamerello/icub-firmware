@@ -254,7 +254,8 @@ void MainTask(void *argument)
         }
     }
 #endif
-    printf("Start\n");
+    printf("Cmd are in form '<mot> <cmd> [<par>]' Where 0 =< mot <= 2; cmd is a char\n");
+    printf("cmds: Recover, miNimum, maXimum, Step, Go, Freewheel, Brake\n");
 
     analogInit();
     lr17_encoder_init();
