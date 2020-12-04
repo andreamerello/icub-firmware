@@ -271,7 +271,10 @@ void MainTask(void *argument)
     cfg2.phaseTableLen = 8192;
     cfg3.phaseTableLen = 8192;
 
-    piezoInit(&cfg1, &cfg2, &cfg3);
+    if (HAL_OK != piezoInit(&cfg1, &cfg2, &cfg3)) {
+	    printf("ERROR: piezo init failure\n");
+	    while(1);
+    }
 
     vel[0] = 0;
 
