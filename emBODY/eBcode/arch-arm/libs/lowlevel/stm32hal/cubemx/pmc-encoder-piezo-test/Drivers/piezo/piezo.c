@@ -452,11 +452,12 @@ void restore_hack()
  * @param   void
  * @return  void
  */
-void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3)
+HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *cfgM3)
 {
     int _shift;
     int i;
     int spi_presc_reg, spi_presc;
+    HAL_StatusTypeDef ret;
 
     pStatusTable[0]->cfg = *cfgM1;
     pStatusTable[1]->cfg = *cfgM2;
@@ -517,8 +518,11 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     HAL_SPI_Transmit_IT(&hspi2, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t));
 
     /* force SPI1 TX in order to flush SPI2/SPI3 fifos */
-    for (i = 0; i < 4; i++)
-        HAL_SPI_Transmit(&hspi1, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t), 100);
+    for (i = 0; i < 4; i++) {
+        ret = HAL_SPI_Transmit(&hspi1, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t), 100);
+        if (ret != HAL_OK)
+            return ret;
+    }
     osDelay(10);
 
     /* Enable DAC sync circuit */
@@ -547,7 +551,10 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
 
     HAL_SPI_Transmit_IT(&hspi3, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t));
     HAL_SPI_Transmit_IT(&hspi2, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t));
-    HAL_SPI_Transmit(&hspi1, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t), 100);
+    ret = HAL_SPI_Transmit(&hspi1, (void*)&reset_cmd, sizeof(reset_cmd)/sizeof(uint16_t), 100);
+    if (ret != HAL_OK)
+        return ret;
+
     osDelay(2);
 
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
@@ -565,6 +572,8 @@ void piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piezoMotorCfg_t *
     HAL_SPI_Transmit_DMA(&hspi2,(void *)(dmaBuffer2), sizeof(dmaBuffer2)/sizeof(uint16_t));
     /* Start DMA for SPI 1 (this must be the last operation) */
     HAL_SPI_Transmit_DMA(&hspi1,(void *)(dmaBuffer1), sizeof(dmaBuffer1)/sizeof(uint16_t));
+
+    return HAL_OK;
 }
 
 /*******************************************************************************************************************//**
