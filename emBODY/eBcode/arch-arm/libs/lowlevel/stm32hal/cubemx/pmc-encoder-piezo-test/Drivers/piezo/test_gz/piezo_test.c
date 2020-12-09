@@ -20,6 +20,9 @@ COMP_HandleTypeDef hcomp1 = {.id = 0};
 COMP_HandleTypeDef hcomp2 = {.id = 1};
 COMP_HandleTypeDef hcomp3 = {.id = 2};
 
+SPI_t _SPI1 = {.CR1 = 2};
+SPI_t *SPI1 = &_SPI1;
+
 pthread_t dma_thread;
 volatile struct  {
 	int size;

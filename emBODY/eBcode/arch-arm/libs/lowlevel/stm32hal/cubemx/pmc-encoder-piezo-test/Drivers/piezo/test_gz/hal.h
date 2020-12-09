@@ -81,7 +81,19 @@ void HAL_SPI_Transmit_DMA(SPI_HandleTypeDef *hspi,
 			  uint8_t *pData, uint16_t Size);
 void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi);
 
-#define SPI_1LINE_TX(x)
+#define HAL_NVIC_DisableIRQ(x)
+#define HAL_SPI_Transmit_IT(...) HAL_OK
+#define HAL_SPI_Transmit(...) HAL_OK
+#define osDelay(x)
+
+typedef struct {
+	int CR1;
+} SPI_t;
+
+#define SPI_CR1_BR_Msk 0x7
+#define SPI_CR1_BR_Pos 2
+
+extern SPI_t *SPI1;
 
 /*
 void HAL_DMA_Start_IT(DMA_HandleTypeDef *h, void *src, void *dst, int size);
