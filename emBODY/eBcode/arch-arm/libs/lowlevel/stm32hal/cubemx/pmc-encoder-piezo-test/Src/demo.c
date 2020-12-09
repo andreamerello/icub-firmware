@@ -134,7 +134,7 @@ void demo_loop(void)
 
     /* bootstrap "prev" val spi encoder turn count */
     lr17_encoder_acquire(NULL, NULL);
-    osDelay(100);
+    osDelay(2);
     lr17_encoder_get(&spi_prev_val);
 
     while(1) {
