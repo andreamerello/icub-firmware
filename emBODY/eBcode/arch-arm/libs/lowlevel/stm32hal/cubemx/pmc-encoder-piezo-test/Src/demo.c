@@ -74,7 +74,7 @@ void demo_init(void)
     cfg.phaseTableLen = 8192;
 
     if (HAL_OK != piezoInit(&cfg, &cfg, &cfg)) {
-	    while(1) {
+            while(1) {
             osDelay(20);
             LED_TOGGLE(LED_REDPORT, LED_RED0);
             LED_TOGGLE(LED_REDPORT, LED_RED1);
