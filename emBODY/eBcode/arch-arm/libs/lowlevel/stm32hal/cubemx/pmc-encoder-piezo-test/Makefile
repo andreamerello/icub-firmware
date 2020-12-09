@@ -87,6 +87,9 @@ Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pcd.c \
 Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pcd_ex.c \
 Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_ll_usb.c \
 Drivers/piezo/piezo.c \
+Drivers/piezo/tables/generated/rhomb_8192_table.c \
+Drivers/piezo/tables/generated/delta_8192_table.c \
+Drivers/piezo/tables/generated/delta_1024_table.c \
 Drivers/encoder/qe_encoder.c \
 Drivers/encoder/lr17_encoder.c \
 Drivers/gpl_utils.c \

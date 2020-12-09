@@ -8,9 +8,7 @@
 #include "usbd_vcom.h"
 #include "utilities.h"
 #include "../Drivers/piezo/piezo.h"
-#include "../Drivers/piezo/tables/generated/delta_8192_table.c"
-#include "../Drivers/piezo/tables/generated/delta_1024_table.c"
-#include "../Drivers/piezo/tables/generated/rhomb_8192_table.c"
+#include "../Drivers/piezo/tables/generated/tables.h"
 #include "../Drivers/encoder/qe_encoder.h"
 #include "../Drivers/encoder/lr17_encoder.h"
 
