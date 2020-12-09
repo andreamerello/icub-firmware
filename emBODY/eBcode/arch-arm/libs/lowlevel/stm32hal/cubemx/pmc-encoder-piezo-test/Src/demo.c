@@ -12,7 +12,6 @@ int qe_zero_direction[] = {1, 1};
 int qe_zero_vel[] = {10, 10};
 
 int spi_motor = 2;
-int spi_direction = 1;
 
 int motor_target[] = {20000, 20000};
 int motor_home[] = {200, 200};
@@ -153,7 +152,7 @@ void demo_loop(void)
         lr17_encoder_get(&spi_val);
         pos = spi_val + count_turn(spi_val, spi_prev_val, 0x7FFF);
         m = spi_motor;
-        spi_direction = motor_move(m,
+        motor_direction[m] = motor_move(m,
                                    motor_target[m], motor_home[m],
                                    pos, motor_direction[m]);
         lr17_encoder_acquire(NULL, NULL);
