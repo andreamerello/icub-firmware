@@ -13,10 +13,10 @@ int qe_zero_vel[] = {10, 10};
 
 int spi_motor = 2;
 
-int motor_target[] = {20000, 20000};
-int motor_home[] = {200, 200};
-int motor_kp[] = {10, 10};
-int motor_max_vel[] = {400, 400};
+int motor_target[] = {20000, 20000, 20000};
+int motor_home[] = {200, 200, 200};
+int motor_ramp_steepness[] = {1, 1, 1};
+int motor_max_vel[] = {400, 400, 400};
 
 qe_encoder_cfg_t qe_cfg[2] = {
     {.htim = &htim2},
@@ -29,6 +29,7 @@ qe_encoder_cfg_t qe_cfg[2] = {
 
 qe_encoder_t qe[2];
 int qe_zero[2];
+int motor_ramp[3] = {0, 0, 0};
 
 void demo_find_zero(void)
 {
@@ -88,20 +89,16 @@ int motor_move(int motor, int max, int min, int pos, int direction)
     int vel;
 
     if (((direction == 1) && (pos > max)) ||
-        ((direction == -1) && (pos < max)))
+        ((direction == -1) && (pos < min))) {
             direction *= -1;
-
-    if (direction == 1) {
-        vel = ((max - pos) * motor_kp[motor]);
-
-        if (vel > motor_max_vel[motor])
-            vel = motor_max_vel[motor];
-    } else {
-        vel = ((pos - min) * motor_kp[motor]);
-
-        if (-vel > motor_max_vel[motor])
-            vel = -motor_max_vel[motor];
     }
+
+    if ((direction == 1) && (motor_ramp[motor] < motor_max_vel[motor]))
+        motor_ramp[motor] += motor_ramp_steepness[motor];
+    else if ((direction == -1) && (motor_ramp[motor] > -motor_max_vel[motor]))
+        motor_ramp[motor] -= motor_ramp_steepness[motor];
+
+    vel = motor_ramp[motor];
 
     piezoSetStepFrequency(motor, vel);
 
