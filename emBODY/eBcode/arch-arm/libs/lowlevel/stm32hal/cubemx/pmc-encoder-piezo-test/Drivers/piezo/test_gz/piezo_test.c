@@ -21,14 +21,14 @@ COMP_HandleTypeDef hcomp2 = {.id = 1};
 COMP_HandleTypeDef hcomp3 = {.id = 2};
 
 pthread_t dma_thread;
-struct  {
+volatile struct  {
 	int size;
 	void *src;
 	void *arg;
 	int idx;
 } dma_data[3];
 
-int dma_stop = 0;
+volatile int dma_stop = 0;
 
 void(*dma_cb)(DMA_HandleTypeDef *_hdma) = NULL;
 void(*dma_h_cb)(DMA_HandleTypeDef *_hdma) = NULL;
@@ -57,10 +57,10 @@ void *dma_worker(void *arg)
 		f[id] = fopen(fname, "w");
 	}
 
-	while (!ACCESS_ONCE(dma_stop)) {
+	while (dma_stop) {
 		for (id = 2; id >= 0; id--) {
 			err = 0;
-			out = ACCESS_ONCE(((uint32_t*)dma_data[id].src)[dma_data[id].idx++]);
+			out = ((volatile uint32_t*)dma_data[id].src)[dma_data[id].idx++];
 			/*
 			 * dma_data.size is in 16-bit words
 			 * the DMA buffer is accessed in 32-bit words
@@ -144,8 +144,8 @@ void HAL_SPI_RegisterCallback(SPI_HandleTypeDef *hspi,
 void HAL_SPI_Transmit_DMA(SPI_HandleTypeDef *hspi,
 			  uint8_t *pData, uint16_t Size)
 {
-	ACCESS_ONCE(dma_data[hspi->id].size) = Size;
-	ACCESS_ONCE(dma_data[hspi->id].src) = pData;
+	dma_data[hspi->id].size = Size;
+	dma_data[hspi->id].src = pData;
 
 	if (hspi->id == 0)
 		pthread_create(&dma_thread, NULL, &dma_worker, NULL);
@@ -154,7 +154,7 @@ void HAL_SPI_Transmit_DMA(SPI_HandleTypeDef *hspi,
 void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 {
 
-	ACCESS_ONCE(dma_stop) = 1;
+	dma_stop = 1;
 
 	pthread_join(dma_thread, NULL);
 
