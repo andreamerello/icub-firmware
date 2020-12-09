@@ -205,7 +205,7 @@ int _piezo_set_state_and_check(int m, piezoMode_t mode, int line)
 	}
 
 	piezoSetMode(m, mode);
-	return _piezo_test_check_state(m, s, 500, line);
+	return _piezo_test_check_state(m, s, 2000, line);
 }
 
 extern void HAL_COMP_RegisterCallback(COMP_HandleTypeDef *hcomp, int a, void(*cb)(COMP_HandleTypeDef *hcomp))
@@ -289,9 +289,9 @@ int main()
 
 	/* test overcurrent recovery */
 	piezoOvercurrentClear(0);
-	piezo_test_check_state(0, STATE_NORMAL, 500);
+	piezo_test_check_state(0, STATE_NORMAL, 2000);
 	piezoOvercurrentClear(1);
-	piezo_test_check_state(1, STATE_STEADY, 500);
+	piezo_test_check_state(1, STATE_STEADY, 2000);
 	sleep(1);
 	HAL_SPI_DMAStop(&hspi1);
 //	printf("count %d\n", dbg_count);
