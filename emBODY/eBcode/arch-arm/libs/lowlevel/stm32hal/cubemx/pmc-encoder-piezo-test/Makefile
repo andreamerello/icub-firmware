@@ -92,7 +92,7 @@ Drivers/piezo/tables/generated/delta_8192_table.c \
 Drivers/piezo/tables/generated/delta_1024_table.c \
 Drivers/encoder/qe_encoder.c \
 Drivers/encoder/lr17_encoder.c \
-Drivers/gpl_utils.c \
+Drivers/utils.c \
 Src/system_stm32g4xx.c \
 Src/app_freertos.c \
 Src/usb_device.c \

@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
-#include "../gpl_utils.h"
+#include "../utils.h"
 #include "piezo.h"
 #include "leds.h"
 #include "cmsis_os.h"

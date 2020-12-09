@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "../piezo.h"
-#include "../../gpl_utils.h"
+#include "../../utils.h"
 #include "../tables/generated/delta_8192_table.c"
 #include "../tables/generated/delta_1024_table.c"
 #include "../tables/generated/rhomb_8192_table.c"
