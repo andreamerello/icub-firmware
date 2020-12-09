@@ -163,7 +163,8 @@ void HAL_SPI_DMAStop(SPI_HandleTypeDef *hspi)
 
 }
 
-int piezo_test_check_state(int m, piezoMotorState_t expected, int timeout_ms)
+#define piezo_test_check_state(m, e, t) _piezo_test_check_state(m, e, t, __LINE__)
+int _piezo_test_check_state(int m, piezoMotorState_t expected, int timeout_ms, int line)
 {
 	piezoMotorState_t state;
 
@@ -177,15 +178,16 @@ int piezo_test_check_state(int m, piezoMotorState_t expected, int timeout_ms)
 	} while (state != expected);
 
 	if (state != expected) {
-		printf("wrong state on motor %d (got %d, expected %d)\n",
-		       m, state, expected);
+		printf("wrong state on motor %d (got %d, expected %d) - line %d\n",
+		       m, state, expected, line);
 		return -1;
 	}
 
 	return 0;
 }
 
-int piezo_set_state_and_check(int m, piezoMode_t mode)
+#define piezo_set_state_and_check(m, mode) _piezo_set_state_and_check(m, mode, __LINE__)
+int _piezo_set_state_and_check(int m, piezoMode_t mode, int line)
 {
 	piezoMotorState_t s;
 	switch (mode) {
@@ -203,7 +205,7 @@ int piezo_set_state_and_check(int m, piezoMode_t mode)
 	}
 
 	piezoSetMode(m, mode);
-	return piezo_test_check_state(m, s, 500);
+	return _piezo_test_check_state(m, s, 500, line);
 }
 
 extern void HAL_COMP_RegisterCallback(COMP_HandleTypeDef *hcomp, int a, void(*cb)(COMP_HandleTypeDef *hcomp))
