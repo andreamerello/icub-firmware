@@ -130,6 +130,7 @@ void demo_loop(void)
     int pos;
     int i;
     int m;
+    int turn = 0;
     int motor_direction[] = {1, 1, 1};
 
     /* bootstrap "prev" val spi encoder turn count */
@@ -150,7 +151,9 @@ void demo_loop(void)
 
         /* spi motor */
         lr17_encoder_get(&spi_val);
-        pos = spi_val + count_turn(spi_val, spi_prev_val, 0x7FFF);
+        turn = count_turn(spi_val, spi_prev_val, 0x7FFF);
+        spi_prev_val = spi_val;
+        pos = spi_val + (turn * 0x8000);
         m = spi_motor;
         motor_direction[m] = motor_move(m,
                                    motor_target[m], motor_home[m],
