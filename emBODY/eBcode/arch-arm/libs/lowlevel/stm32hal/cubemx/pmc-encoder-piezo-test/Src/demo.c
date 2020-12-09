@@ -8,7 +8,7 @@
 
 /* mapping qe encoders vs motors */
 int qe_motor[] = {0, 1};
-int qe_direction[] = {1, 1};
+int qe_zero_direction[] = {1, 1};
 int qe_zero_vel[] = {10, 10};
 
 int spi_motor = 2;
@@ -44,7 +44,7 @@ void demo_find_zero(void)
     }
 
     for (i = 0; i < QE_N; i++) {
-        piezoSetStepFrequency(i, qe_zero_vel[i] * qe_direction[i]);
+        piezoSetStepFrequency(i, qe_zero_vel[i] * qe_zero_direction[i]);
     }
 
     while (found < QE_N) {
@@ -144,7 +144,7 @@ void demo_loop(void)
             qe_encoder_get(&qe[i], &qe_val);
             qe_val -= qe_zero[i];
             m = qe_motor[i];
-            qe_direction[i] = motor_move(m,
+            motor_direction[i] = motor_move(m,
                                          motor_target[m], motor_home[m],
                                          qe_val, motor_direction[m]);
         }
