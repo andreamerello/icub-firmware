@@ -60,7 +60,7 @@ void *dma_worker(void *arg)
 		f[id] = fopen(fname, "w");
 	}
 
-	while (dma_stop) {
+	while (!dma_stop) {
 		for (id = 2; id >= 0; id--) {
 			err = 0;
 			out = ((volatile uint32_t*)dma_data[id].src)[dma_data[id].idx++];
