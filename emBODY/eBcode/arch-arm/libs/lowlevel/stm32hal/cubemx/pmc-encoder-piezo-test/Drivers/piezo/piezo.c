@@ -95,11 +95,11 @@ typedef struct
     uint32_t mask;
     piezoMotorCfg_t cfg;
     struct {
-        enum {
-            FSM_RAMP,
-            FSM_STEADY,
-            FSM_RUN
-        } state;
+	    volatile enum {
+		    FSM_RAMP,
+		    FSM_STEADY,
+		    FSM_RUN
+	    } state;
         piezoMode_t mode;
         uint32_t ramp_target[4];
         uint32_t last_vals[4];
@@ -131,14 +131,14 @@ static PiezoMotorStatus_t * const pStatusTable[] = {&piezoMotor1, &piezoMotor2, 
             vals[4]     Phase values to be load into the DMA buffer
  * @return  void
  */
-static inline void piezoLoadQSmp(QuadSample_t *pQSmp, uint32_t vals[4])
+static inline void piezoLoadQSmp(volatile QuadSample_t *pQSmp, uint32_t vals[4])
 {
     int i;
     uint32_t cmd;
 
     for (i = 0; i < 4; i++) {
         cmd = (i == 3) ? DACCMD_SETLDAC : DACCMD_SET;
-        ACCESS_ONCE(pQSmp->dac[i]) = SETDACVALUE(cmd, i, vals[i]);
+        pQSmp->dac[i] = SETDACVALUE(cmd, i, vals[i]);
     }
 }
 
@@ -225,7 +225,7 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
 
         /* check if we are in FSM_RAMP state */
         if (pStatus->fsm.state == FSM_RAMP) {
-            ACCESS_ONCE(pStatus->state) = STATE_RAMPING;
+            pStatus->state = STATE_RAMPING;
             for (; pStatus->fsm.ramp_counter < PIEZO_RAMP_SAMPLES; pStatus->fsm.ramp_counter++) {
                 for (i = 0; i < 4; i++) {
                     k1 = (PIEZO_RAMP_SAMPLES - pStatus->fsm.ramp_counter);
@@ -251,14 +251,14 @@ static void piezoLoadBuffer(PiezoMotorStatus_t *pStatus, unsigned index)
     /* recheck FSM state; we could get a new state from previous FSM_RAMP check */
     if (pStatus->fsm.state == FSM_STEADY) {
         if (pStatus->overcurrent)
-            ACCESS_ONCE(pStatus->state) = STATE_OVERCURRENT;
+            pStatus->state = STATE_OVERCURRENT;
         else
-            ACCESS_ONCE(pStatus->state) = STATE_STEADY;
+            pStatus->state = STATE_STEADY;
         /* Fill the half-buffer with the value for steady voltage */
         for ( ; n-- ; pQSmp++)
             piezoLoadQSmp(pQSmp, pStatus->fsm.last_vals);
     } else if (pStatus->fsm.state == FSM_RUN) {
-        ACCESS_ONCE(pStatus->state) = STATE_NORMAL;
+        pStatus->state = STATE_NORMAL;
         /* Fill the half-buffer with values taken from phaseTable[] */
         for ( ; n-- ; pQSmp++)
         {
@@ -728,7 +728,7 @@ HAL_StatusTypeDef piezoGetState(piezoMotor_t motor, piezoMotorState_t *state)
     if ((motor < 0) || (motor > 2u))
         return HAL_ERROR;
 
-    *state = ACCESS_ONCE(pStatusTable[motor]->state);
+    *state = pStatusTable[motor]->state;
     return HAL_OK;
 }
 
@@ -744,10 +744,10 @@ HAL_StatusTypeDef piezoOvercurrentClear(piezoMotor_t motor)
     if ((motor < 0) || (motor > 2u) || (piezoFreqConst == 0))
         return HAL_ERROR;
 
-    if (!ACCESS_ONCE(pStatusTable[motor]->overcurrent))
+    if (!pStatusTable[motor]->overcurrent)
         return HAL_OK;
 
-    ACCESS_ONCE(pStatusTable[motor]->overcurrent) = 0;
+    pStatusTable[motor]->overcurrent = 0;
     switch (motor) {
     case 0:
         HAL_COMP_Start(&hcomp1);

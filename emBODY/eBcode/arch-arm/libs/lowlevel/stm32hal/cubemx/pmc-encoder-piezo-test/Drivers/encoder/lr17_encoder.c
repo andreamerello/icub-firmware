@@ -3,7 +3,7 @@
 void(*lr17_encoder_cb)(void *arg) = NULL;
 void *lr17_encoder_cb_arg;
 
-int lr17_encoder_val = 0;
+volatile int lr17_encoder_val = 0;
 
 union {
     uint8_t spi[2];
@@ -47,7 +47,7 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
  */
 bool lr17_encoder_get(int *angle)
 {
-    *angle = ACCESS_ONCE(lr17_encoder_val);
+    *angle = lr17_encoder_val;
     return true;
 }
 
@@ -57,8 +57,8 @@ bool lr17_encoder_get(int *angle)
  */
 static void lr17_spi_cb(SPI_HandleTypeDef *spi)
 {
-    ACCESS_ONCE(lr17_encoder_val) =
-        ACCESS_ONCE(lr17_encoder_buf.val) & 0x7fff;
+	lr17_encoder_val =
+		lr17_encoder_buf.val & 0x7fff;
     if (lr17_encoder_cb)
         lr17_encoder_cb(lr17_encoder_cb_arg);
 }
