@@ -143,7 +143,7 @@ void demo_loop(void)
             qe_encoder_get(&qe[i], &qe_val);
             qe_val -= qe_zero[i];
             m = qe_motor[i];
-            motor_direction[i] = motor_move(m,
+            motor_direction[m] = motor_move(m,
                                          motor_target[m], motor_home[m],
                                          qe_val, motor_direction[m]);
         }
