@@ -481,7 +481,7 @@ HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piez
     piezoFreqConst = (spi_presc * 4LL * 36LL * 4294967296LL)/(int32_t)HAL_RCC_GetPCLK2Freq();
 
     /* precalc shift & mask factors and clear/initialize variables */
-    for (i = 0; i < ARRAY_SIZE(pStatusTable); i++) {
+    for (i = 0; i < 3; i++) {
         _shift = find_last_set_bit(pStatusTable[i]->cfg.phaseTableLen) - 1;
         pStatusTable[i]->shift = 32 - _shift;
         pStatusTable[i]->mask = (1 << _shift) - 1;
