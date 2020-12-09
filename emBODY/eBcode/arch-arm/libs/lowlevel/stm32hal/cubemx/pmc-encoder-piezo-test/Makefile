@@ -100,6 +100,8 @@ Src/usbd_vcom.c \
 Src/console.c \
 Src/utilities.c \
 Src/analog.c \
+Src/eng_test.c \
+Src/demo.c \
 Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
 Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
 Middlewares/Third_Party/FreeRTOS/Source/list.c \
