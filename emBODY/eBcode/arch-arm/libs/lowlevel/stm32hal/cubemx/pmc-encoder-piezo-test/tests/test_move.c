@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#define FILE_NAME "test_move_out.csv"
+
 int _vel;
 
 extern int motor_move(int motor, int max, int min, int pos, int direction);
@@ -15,7 +17,7 @@ int main()
 	int i;
 	int direction = 1;
 	double pos = 0;
-	FILE *f = fopen("test_move_out.csv", "w");
+	FILE *f = fopen(FILE_NAME, "w");
 
 	for (i = 0; i < 200000; i++) {
 		direction = motor_move(0, 14324, 11, pos, direction);
@@ -25,4 +27,5 @@ int main()
 		fprintf(f, "%f, %d\n", pos, _vel);
 	}
 	fclose(f);
+	printf("written "FILE_NAME"\n");
 }
