@@ -2,20 +2,7 @@
 
 #define TURN_THR 1000
 
-int count_turn(int val, int prev, int max)
-{
-    if ((val > prev) &&
-        (val > (max - TURN_THR)) &&
-        (prev < TURN_THR ))
-        return -1;
-
-    if ((val < prev) &&
-        (val < TURN_THR) &&
-        (prev > (max - TURN_THR)))
-        return 1;
-
-    return 0;
-}
+extern int count_turn(int val, int prev, int max);
 
 int main()
 {
