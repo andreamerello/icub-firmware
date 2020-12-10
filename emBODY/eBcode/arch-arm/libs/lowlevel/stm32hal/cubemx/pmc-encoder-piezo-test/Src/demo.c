@@ -1,10 +1,4 @@
 #include "demo.h"
-#include "leds.h"
-#include "cmsis_os.h"
-#include "../Drivers/encoder/qe_encoder.h"
-#include "../Drivers/encoder/lr17_encoder.h"
-#include "../Drivers/piezo/tables/generated/tables.h"
-#include "../Drivers/piezo/piezo.h"
 
 /* mapping qe encoders vs motors */
 int qe_motor[] = {0, 1};
