@@ -221,6 +221,7 @@ void eng_test_main(void)
             lr17_encoder_get(&lr17_val);
             printf("\033[s");
             printf("\033[5;0H");
+            printf("\033[K");
             printf("encoders: QE1: %d, QE2: %d, ABS: %d\n",
                    qe_val[0], qe_val[1], lr17_val);
 
