@@ -155,6 +155,9 @@ void eng_test_main(void)
 	    while(1);
     }
 
+    for (i = 0; i < 3; i++)
+        piezoSetMode(i, PIEZO_BRAKE);
+
     vel[0] = 0;
 
     while (1) {
