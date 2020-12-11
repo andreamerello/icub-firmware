@@ -5,10 +5,7 @@ void *lr17_encoder_cb_arg;
 
 volatile int lr17_encoder_val = 0;
 
-union {
-    uint8_t spi[2];
-    uint16_t val;
-} lr17_encoder_buf;
+uint16_t lr17_encoder_buf;
 
 static void lr17_spi_cb(SPI_HandleTypeDef *spi);
 
@@ -36,7 +33,7 @@ bool lr17_encoder_acquire(void(*cb)(void *arg), void *arg)
     lr17_encoder_cb_arg = arg;
     lr17_encoder_cb = cb;
 
-    HAL_SPI_Receive_IT(&hspi4, lr17_encoder_buf.spi, 2);
+    HAL_SPI_Receive_IT(&hspi4, (void*) &lr17_encoder_buf, 1);
     return true;
 }
 
