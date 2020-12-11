@@ -58,23 +58,29 @@ void demo_find_zero(void)
     int i;
     int val;
     int prev_val[3];
-    int prev_turn_val;
     int m;
     int found = 0;
+#ifdef SPI_SEARCH_ZERO
+    int prev_turn_val;
     int turn = 0;
 
     lr17_encoder_acquire(NULL, NULL);
-
-    for (i = 0; i < 2; i++) {
-        qe_encoder_get(&qe[i], &prev_val[qe_motor[i]]);
-    }
+    osDelay(2);
     lr17_encoder_get(&prev_val[spi_motor]);
     prev_turn_val = prev_val[spi_motor];
+    /* move in encoder-decreasing dir, so that min enc value became 0 */
+    piezoSetStepFrequency(spi_motor,
+                          motor_zero_vel[spi_motor] * -motor_direction_sign[spi_motor]);
+#endif
 
-    for (i = 0; i < 3; i++) {
+
+    for (i = 0; i < 2; i++) {
+        m = qe_motor[i];
         /* move in encoder-decreasing dir, so that min enc value became 0 */
-        piezoSetStepFrequency(i, motor_zero_vel[i] * -motor_direction_sign[i]);
+        piezoSetStepFrequency(m, motor_zero_vel[m] * -motor_direction_sign[m]);
+        qe_encoder_get(&qe[i], &prev_val[qe_motor[i]]);
     }
+
     osDelay(50);
     while (found != 7) {
 
