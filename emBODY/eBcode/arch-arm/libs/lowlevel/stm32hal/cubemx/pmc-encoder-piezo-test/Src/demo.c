@@ -2,6 +2,7 @@
 
 #ifndef DEBUG
 #define coprintf(...)
+#else
 #include "console.h"
 #endif
 
