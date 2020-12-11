@@ -55,7 +55,7 @@ bool lr17_encoder_get(int *angle)
 static void lr17_spi_cb(SPI_HandleTypeDef *spi)
 {
 	lr17_encoder_val =
-		lr17_encoder_buf.val & 0x7fff;
+		(lr17_encoder_buf & 0x7fff);
     if (lr17_encoder_cb)
         lr17_encoder_cb(lr17_encoder_cb_arg);
 }
