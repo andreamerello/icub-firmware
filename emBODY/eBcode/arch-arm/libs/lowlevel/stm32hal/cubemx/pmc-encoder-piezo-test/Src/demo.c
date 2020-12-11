@@ -1,3 +1,4 @@
+#include <string.h>
 #include "demo.h"
 
 #ifndef DEBUG
@@ -12,15 +13,19 @@ int spi_motor = 0;
 
 int motor_zero_vel[] = {100, 10, 10};
 int motor_direction_sign[] = {-1, 1, 1};
-int motor_target[] = {5000 , 20000, 20000};
-int motor_home[] = {2000, 100, 100};
-int motor_ramp_steepness[] = {1, 1, 1};
-int motor_max_vel[] = {800, 400, 400};
+int motor_target[] = {6800 , 20000, 20000};
+int motor_home[] = {250, 100, 100};
+int motor_max_vel[] = {1000, 400, 400};
 
 qe_encoder_cfg_t qe_cfg[2] = {
     {.htim = &htim2},
     {.htim = &htim5}
 };
+
+typedef struct {
+    int direction;
+    int start;
+} motion_state_t;
 
 #define QE_THR 5
 #define SPI_THR 10
@@ -146,25 +151,43 @@ void demo_init(void)
     }
 }
 
-int motor_move(int motor, int max, int min, int pos, int direction)
+int motor_move(int max, int min, int pos, int maxvel,
+               motion_state_t *state)
 {
-    int vel;
+    int vel, vel1, vel2;
+    static int count = 0;
 
-    if (((direction == 1) && (pos > max)) ||
-        ((direction == -1) && (pos < min))) {
-            direction *= -1;
+    if (!state->direction) {
+        state->direction = 1;
+        state->start = pos;
     }
 
-    if ((direction == 1) && (motor_ramp[motor] < motor_max_vel[motor]))
-        motor_ramp[motor] += motor_ramp_steepness[motor];
-    else if ((direction == -1) && (motor_ramp[motor] > -motor_max_vel[motor]))
-        motor_ramp[motor] -= motor_ramp_steepness[motor];
+    if (((state->direction == 1) && (pos > max)) ||
+        ((state->direction == -1) && (pos < min))) {
+             state->direction *= -1;
+             state->start = pos;
+    }
 
-    vel = motor_ramp[motor];
+    /* vel considering ramp up from start */
+    vel1 = abs(state->start - pos);
+    /* vel considering ramp down reaching target */
+    vel2 = (state->direction == 1) ? (max - pos) : (pos - min);
+    /* we might be ramping up or down; don't mind, just take the slowest */
+    vel = vel1 < vel2 ? vel1 : vel2;
 
-    piezoSetStepFrequency(motor, vel * motor_direction_sign[motor]);
+    if (count++ < 1000)
+        coprintf("v%d d%d p%d\n", vel, state->direction, pos);
 
-    return direction;
+    /* "bootstrap" velocity to move away from target (ramp will be zero here */
+    if (vel < 20)
+        vel = 20;
+
+    /* vel profile must be clamped, otherwise a triangle will be generated */
+    if (vel > maxvel) {
+        vel = maxvel;
+    }
+
+    return vel * state->direction;
 }
 
 void demo_loop(void)
@@ -175,8 +198,10 @@ void demo_loop(void)
     int i;
     int m;
     int turn = 0;
-    int motor_direction[] = {1, 1, 1};
+    motion_state_t motion[3];
+    int vel;
 
+    memset(motion, 0, sizeof(motion));
     /* bootstrap "prev" val spi encoder turn count */
     lr17_encoder_acquire(NULL, NULL);
     osDelay(2);
@@ -188,9 +213,10 @@ void demo_loop(void)
             qe_encoder_get(&qe[i], &qe_val);
             qe_val -= qe_zero[i];
             m = qe_motor[i];
-            motor_direction[m] = motor_move(m,
-                                         motor_target[m], motor_home[m],
-                                         qe_val, motor_direction[m]);
+            vel = motor_move(motor_target[m], motor_home[m],
+                                            qe_val,
+                                            motor_max_vel[m], &motion[m]);
+            piezoSetStepFrequency(m, vel * motor_direction_sign[m]);
         }
 
         /* spi motor */
@@ -199,10 +225,12 @@ void demo_loop(void)
         spi_prev_val = spi_val;
         pos = spi_val + (turn * 0x8000) - spi_zero;
         m = spi_motor;
-        coprintf("motion pos %d\n", pos);
-        motor_direction[m] = motor_move(m,
-                                   motor_target[m], motor_home[m],
-                                   pos, motor_direction[m]);
+
+        vel = motor_move(motor_target[m], motor_home[m],
+                                        pos,
+                                        motor_max_vel[m], &motion[m]);
+
+        piezoSetStepFrequency(m, vel * motor_direction_sign[m]);
         lr17_encoder_acquire(NULL, NULL);
 
         /* control loop 1KHz */
