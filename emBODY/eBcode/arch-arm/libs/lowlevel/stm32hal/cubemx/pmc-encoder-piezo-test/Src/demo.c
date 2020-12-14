@@ -1,7 +1,7 @@
 #include <string.h>
 #include "demo.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifndef DEBUG
 #define coprintf(...)
