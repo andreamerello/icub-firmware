@@ -1,11 +1,15 @@
 #include <string.h>
 #include "demo.h"
 
+#define DEBUG
+
 #ifndef DEBUG
 #define coprintf(...)
 #else
 #include "console.h"
 #endif
+
+//#define SPI_SEARCH_ZERO
 
 /* mapping qe encoders vs motors */
 int qe_motor[] = {1, 2};
@@ -155,7 +159,6 @@ int motor_move(int max, int min, int pos, int maxvel,
                motion_state_t *state)
 {
     int vel, vel1, vel2;
-    static int count = 0;
 
     if (!state->direction) {
         state->direction = 1;
@@ -175,9 +178,11 @@ int motor_move(int max, int min, int pos, int maxvel,
     /* we might be ramping up or down; don't mind, just take the slowest */
     vel = vel1 < vel2 ? vel1 : vel2;
 
-    if (count++ < 1000)
-        coprintf("v%d d%d p%d\n", vel, state->direction, pos);
-
+#ifdef DEBUG
+    coprintf("\033[5;0H");
+    coprintf("\033[K");
+    coprintf("p: %d, d: %d, s: %d v: %d\n", pos, state->direction, state->start, vel);
+#endif
     /* "bootstrap" velocity to move away from target (ramp will be zero here */
     if (vel < 20)
         vel = 20;
@@ -213,10 +218,11 @@ void demo_loop(void)
             qe_encoder_get(&qe[i], &qe_val);
             qe_val -= qe_zero[i];
             m = qe_motor[i];
-            vel = motor_move(motor_target[m], motor_home[m],
+/*            vel = motor_move(motor_target[m], motor_home[m],
                                             qe_val,
                                             motor_max_vel[m], &motion[m]);
             piezoSetStepFrequency(m, vel * motor_direction_sign[m]);
+*/
         }
 
         /* spi motor */
