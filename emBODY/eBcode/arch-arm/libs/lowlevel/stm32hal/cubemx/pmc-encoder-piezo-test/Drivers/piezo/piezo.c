@@ -13,8 +13,8 @@
 #include <string.h>
 #include "../utils.h"
 #include "piezo.h"
-#include "leds.h"
-#include "cmsis_os.h"
+//#include "leds.h"
+//#include "cmsis_os.h"
 
 #if (USE_HAL_COMP_REGISTER_CALLBACKS != 1)
     #error Flag COMP in menu "Project Manager -> Advanced Settings -> Register CallBack" in CubeMx must be ENABLED
@@ -400,18 +400,18 @@ void restore_hack()
 
 #if 1
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
-    osDelay(5);
+    HAL_Delay(5);
     coprintf("reset : %d\n",HAL_GPIO_ReadPin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin));
 
     HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
     HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
     HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
     HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
-    osDelay(10);
+    HAL_Delay(10);
 
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
-    osDelay(5);
+    HAL_Delay(5);
     coprintf("set : %d\n",HAL_GPIO_ReadPin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin));
 
 #endif
@@ -425,11 +425,11 @@ void restore_hack()
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-    osDelay(1);
+    HAL_Delay(1);
     HAL_GPIO_WritePin(GPIOA, DAC1_NSEL_Pin, GPIO_PIN_RESET);
-    osDelay(1);
+    HAL_Delay(1);
     HAL_GPIO_WritePin(GPIOA, DAC1_NSEL_Pin, GPIO_PIN_SET);
-    osDelay(1);
+    HAL_Delay(1);
 
     GPIO_InitStruct.Pin = DAC1_NSEL_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -511,7 +511,7 @@ HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piez
 
     /* Clear DAC-sync FF; make sure all is properly aligned */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_RESET);
-    osDelay(5);
+    HAL_Delay(5);
 
     /* push some data to wake up SPI2/3 */
     HAL_SPI_Transmit_IT(&hspi3, (void*)&dummy_cmd, sizeof(dummy_cmd)/sizeof(uint16_t));
@@ -523,11 +523,11 @@ HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piez
         if (ret != HAL_OK)
             return ret;
     }
-    osDelay(10);
+    HAL_Delay(10);
 
     /* Enable DAC sync circuit */
     HAL_GPIO_WritePin(DAC_SYNCEN_GPIO_Port, DAC_SYNCEN_Pin, GPIO_PIN_SET);
-    osDelay(5);
+    HAL_Delay(5);
 
 #ifdef DEBUG_SPI
     while(1) {
@@ -539,12 +539,12 @@ HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piez
             HAL_SPI_Transmit_IT(&hspi2, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
             HAL_SPI_Transmit(&hspi1, (void*)&clr_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
 
-            osDelay(10);
+            HAL_Delay(10);
 
             HAL_SPI_Transmit_IT(&hspi3, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
             HAL_SPI_Transmit_IT(&hspi2, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t));
             HAL_SPI_Transmit(&hspi1, (void*)&dbg_cmd, sizeof(clr_cmd)/sizeof(uint16_t), HAL_MAX_DELAY);
-            osDelay(10);
+            HAL_Delay(10);
         }
     }
 #endif
@@ -555,7 +555,7 @@ HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piez
     if (ret != HAL_OK)
         return ret;
 
-    osDelay(2);
+    HAL_Delay(2);
 
     HAL_NVIC_DisableIRQ(SPI3_IRQn);
     HAL_NVIC_DisableIRQ(SPI2_IRQn);
@@ -563,15 +563,15 @@ HAL_StatusTypeDef piezoInit(piezoMotorCfg_t *cfgM1, piezoMotorCfg_t *cfgM2, piez
 
     /* Enable HV generator */
     piezoHighVoltage(ENABLE);
-    osDelay(20U);
+    HAL_Delay(20U);
 
     for (i = 0; i < 3; i++)
         piezoOvercurrentClear(i);
 
-    HAL_SPI_Transmit_DMA(&hspi3,(void *)(dmaBuffer3), sizeof(dmaBuffer3)/sizeof(uint16_t));
-    HAL_SPI_Transmit_DMA(&hspi2,(void *)(dmaBuffer2), sizeof(dmaBuffer2)/sizeof(uint16_t));
+    HAL_SPI_Transmit_DMA(&hspi3,(void *)(dmaBuffer3), sizeof(dmaBuffer3)/(sizeof(uint16_t)));
+    HAL_SPI_Transmit_DMA(&hspi2,(void *)(dmaBuffer2), sizeof(dmaBuffer2)/(sizeof(uint16_t)));
     /* Start DMA for SPI 1 (this must be the last operation) */
-    HAL_SPI_Transmit_DMA(&hspi1,(void *)(dmaBuffer1), sizeof(dmaBuffer1)/sizeof(uint16_t));
+    HAL_SPI_Transmit_DMA(&hspi1,(void *)(dmaBuffer1), sizeof(dmaBuffer1)/(sizeof(uint16_t)));
 
     return HAL_OK;
 }
