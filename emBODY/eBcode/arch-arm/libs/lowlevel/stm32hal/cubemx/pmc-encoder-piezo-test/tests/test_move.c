@@ -4,27 +4,27 @@
 
 int _vel;
 
-extern int motor_move(int motor, int max, int min, int pos, int direction);
-void piezoSetStepFrequency(int motor, int vel)
-{
-    _vel = vel;
-}
-
-
+int motor_move(int max, int min, int pos, int maxvel,
+               void *state);
 
 int main()
 {
 	int i;
-	int direction = 1;
-	double pos = 0;
+	int vel;
+	float pos = 0;
+	struct {
+		int direction;
+		int start;
+	} state = {0, 0};
+
 	FILE *f = fopen(FILE_NAME, "w");
 
-	for (i = 0; i < 200000; i++) {
-		direction = motor_move(0, 14324, 11, pos, direction);
+	for (i = 0; i < 20000; i++) {
+		vel = motor_move(5000, 1000, pos, 500, &state);
 
-		pos += _vel * 0.01;
+		pos += (float)vel * 0.01;
 
-		fprintf(f, "%f, %d\n", pos, _vel);
+		fprintf(f, "%f, %d\n", pos, vel);
 	}
 	fclose(f);
 	printf("written "FILE_NAME"\n");
